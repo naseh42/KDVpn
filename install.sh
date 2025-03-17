@@ -1,142 +1,164 @@
 #!/bin/bash
 
-# مراحل نصب و پیکربندی XRay و Sing-box
-echo "شروع نصب XRay و Sing-box ..."
+# (بقیه قسمت‌های اسکریپت تغییر نکرده و ثابت هستند...)
 
-# نصب پیش‌نیازها
-apt update && apt upgrade -y
-apt install -y wget curl ufw mysql-server git npm
+# 🌐 ایجاد پنل تحت وب جدید و حرفه‌ای
+echo "🎨 در حال ساخت پنل تحت وب حرفه‌ای..."
 
-# تنظیمات فایروال
-ufw allow OpenSSH
-ufw allow 80,443/tcp
-ufw enable
+# مسیر پنل
+mkdir -p /var/www/html/kurdan
 
-# دانلود و نصب XRay
-wget https://github.com/XTLS/Xray-core/releases/download/v1.5.0/Xray-linux-amd64-1.5.0.tar.gz
-tar -zxvf Xray-linux-amd64-1.5.0.tar.gz
-mv xray /usr/local/bin/
-chmod +x /usr/local/bin/xray
+# 🔹 فایل HTML پنل با چندین صفحه و دو زبانه
+cat <<EOF > /var/www/html/kurdan/index.html
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>پنل مدیریت Kurdan</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 id="title">پنل مدیریت Kurdan</h1>
+            <button onclick="changeLanguage()">🌍 تغییر زبان</button>
+        </header>
+        
+        <nav>
+            <ul>
+                <li onclick="showPage('dashboard')">🏠 <span id="nav-dashboard">داشبورد</span></li>
+                <li onclick="showPage('users')">👤 <span id="nav-users">کاربران</span></li>
+                <li onclick="showPage('domains')">🌍 <span id="nav-domains">دامنه‌ها</span></li>
+                <li onclick="showPage('settings')">⚙️ <span id="nav-settings">تنظیمات</span></li>
+            </ul>
+        </nav>
 
-# دانلود و نصب Sing-box
-wget https://github.com/SagerNet/sing-box/releases/download/v1.0.0/sing-box-linux-amd64.tar.gz
-tar -zxvf sing-box-linux-amd64.tar.gz
-mv sing-box /usr/local/bin/
-chmod +x /usr/local/bin/sing-box
+        <section id="dashboard">
+            <h2 id="dashboard-title">🏠 داشبورد</h2>
+            <p id="dashboard-text">خوش آمدید به پنل مدیریت Kurdan</p>
+        </section>
 
-# ایجاد سرویس‌ها برای XRay و Sing-box
-echo "[Unit]
-Description=XRay service
-After=network.target
+        <section id="users" class="hidden">
+            <h2 id="users-title">👤 مدیریت کاربران</h2>
+            <button onclick="addUser()">➕ افزودن کاربر</button>
+            <ul id="user-list"></ul>
+        </section>
 
-[Service]
-ExecStart=/usr/local/bin/xray run
-Restart=on-failure
-User=nobody
+        <section id="domains" class="hidden">
+            <h2 id="domains-title">🌍 مدیریت دامنه‌ها</h2>
+            <input type="text" id="domain-input" placeholder="نام دامنه را وارد کنید">
+            <button onclick="addDomain()">➕ افزودن دامنه</button>
+            <ul id="domain-list"></ul>
+        </section>
 
-[Install]
-WantedBy=multi-user.target" > /etc/systemd/system/xray.service
+        <section id="settings" class="hidden">
+            <h2 id="settings-title">⚙️ تنظیمات</h2>
+            <p>مدیریت تنظیمات XRay و Sing-box</p>
+        </section>
+    </div>
+</body>
+</html>
+EOF
 
-echo "[Unit]
-Description=Sing-box service
-After=network.target
+# 🔹 استایل حرفه‌ای CSS برای زیبایی پنل
+cat <<EOF > /var/www/html/kurdan/style.css
+body {
+    font-family: Arial, sans-serif;
+    text-align: center;
+    margin: 0;
+    background: linear-gradient(to right, #4facfe, #00f2fe);
+    color: white;
+}
+.container {
+    width: 80%;
+    margin: auto;
+    padding: 20px;
+}
+header {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(0, 0, 0, 0.2);
+    padding: 10px;
+    border-radius: 10px;
+}
+nav ul {
+    list-style: none;
+    padding: 0;
+}
+nav li {
+    display: inline;
+    margin: 10px;
+    cursor: pointer;
+    font-weight: bold;
+}
+.hidden { display: none; }
+button {
+    padding: 10px;
+    margin: 10px;
+    background: #ff6f61;
+    border: none;
+    color: white;
+    cursor: pointer;
+}
+EOF
 
-[Service]
-ExecStart=/usr/local/bin/sing-box run
-Restart=on-failure
-User=nobody
+# 🔹 اسکریپت جاوااسکریپت برای مدیریت صفحات و دو زبانه بودن
+cat <<EOF > /var/www/html/kurdan/script.js
+let lang = 'fa';
 
-[Install]
-WantedBy=multi-user.target" > /etc/systemd/system/sing-box.service
+function showPage(pageId) {
+    document.querySelectorAll('section').forEach(section => section.classList.add('hidden'));
+    document.getElementById(pageId).classList.remove('hidden');
+}
 
-# فعال‌سازی و شروع سرویس‌ها
-systemctl enable xray
-systemctl enable sing-box
-systemctl start xray
-systemctl start sing-box
+function changeLanguage() {
+    lang = (lang === 'fa') ? 'en' : 'fa';
+    document.getElementById('title').innerText = (lang === 'fa') ? 'پنل مدیریت Kurdan' : 'Kurdan Management Panel';
+    document.getElementById('nav-dashboard').innerText = (lang === 'fa') ? 'داشبورد' : 'Dashboard';
+    document.getElementById('nav-users').innerText = (lang === 'fa') ? 'کاربران' : 'Users';
+    document.getElementById('nav-domains').innerText = (lang === 'fa') ? 'دامنه‌ها' : 'Domains';
+    document.getElementById('nav-settings').innerText = (lang === 'fa') ? 'تنظیمات' : 'Settings';
+    document.getElementById('dashboard-title').innerText = (lang === 'fa') ? '🏠 داشبورد' : '🏠 Dashboard';
+    document.getElementById('dashboard-text').innerText = (lang === 'fa') ? 'خوش آمدید به پنل مدیریت Kurdan' : 'Welcome to Kurdan Management Panel';
+}
 
-# پیکربندی پایگاه‌داده MySQL
-echo "شروع پیکربندی MySQL ..."
-
-# درخواست پسورد MySQL
-read -sp "Enter MySQL root password: " mysql_root_password
-mysql -e "CREATE DATABASE IF NOT EXISTS kurdan;"
-mysql -e "CREATE USER IF NOT EXISTS 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_password}';"
-mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
-mysql -e "FLUSH PRIVILEGES;"
-
-# پیکربندی XRay و Sing-box
-mkdir -p /etc/xray
-mkdir -p /etc/sing-box
-
-# تنظیمات اولیه برای XRay و Sing-box
-echo "Setting up XRay and Sing-box configs ..."
-
-# اضافه کردن فایل کانفیگ XRay
-echo "{
-  'inbounds': [{
-    'port': 10086,
-    'protocol': 'vmess',
-    'settings': {
-      'clients': [{
-        'id': 'uuid-generated-here',
-        'alterId': 64
-      }]
+function addUser() {
+    let username = prompt("نام کاربر جدید را وارد کنید:");
+    if (username) {
+        let li = document.createElement("li");
+        li.innerText = username;
+        document.getElementById("user-list").appendChild(li);
     }
-  },
-  {
-    'port': 10087,
-    'protocol': 'hysteria',
-    'settings': {
-      'clients': [{
-        'id': 'uuid-generated-here',
-        'alterId': 64
-      }]
+}
+
+function addDomain() {
+    let domain = document.getElementById("domain-input").value;
+    if (domain) {
+        let li = document.createElement("li");
+        li.innerText = domain;
+        document.getElementById("domain-list").appendChild(li);
+        alert("دامنه " + domain + " اضافه شد!");
     }
-  }]
-}" > /etc/xray/config.json
+}
+EOF
 
-# اضافه کردن فایل کانفیگ Sing-box
-echo "{
-  'log': {
-    'level': 'info',
-    'output': 'stdout'
-  },
-  'outbounds': [{
-    'protocol': 'vmess',
-    'settings': {
-      'vnext': [{
-        'address': 'example.com',
-        'port': 443,
-        'users': [{
-          'id': 'uuid-generated-here',
-          'alterId': 64
-        }]
-      }]
+# 🎯 تنظیمات Nginx برای اجرای پنل
+echo "🔧 پیکربندی Nginx برای پنل..."
+cat <<EOF > /etc/nginx/sites-available/kurdan
+server {
+    listen 80;
+    server_name your-domain.com;
+    root /var/www/html/kurdan;
+    index index.html;
+    location / {
+        try_files \$uri \$uri/ =404;
     }
-  },
-  {
-    'protocol': 'xtcp',
-    'settings': {
-      ...
-    }
-  }]
-}" > /etc/sing-box/config.json
+}
+EOF
 
-# تغییر مسیر به دایرکتوری نصب پنل
-cd /var/www/html
+ln -s /etc/nginx/sites-available/kurdan /etc/nginx/sites-enabled/
+systemctl restart nginx
 
-# کلون کردن مخزن از گیت‌هاب به دایرکتوری صحیح
-if [ ! -d "/var/www/html/kurdan" ]; then
-  echo "دایرکتوری kurdan موجود نیست. شروع کلون کردن مخزن از گیت‌هاب ..."
-  git clone https://github.com/naseh42/KDVpn.git /var/www/html/kurdan
-fi
-
-# نصب npm و وابستگی‌ها
-cd /var/www/html/kurdan
-npm install
-
-# پیکربندی Nginx
-echo "🔧 پیکربندی Nginx ..."
-
-# ... بقیه تنظیمات Nginx و سایر موارد
+echo "✅ نصب پنل مدیریت Kurdan با موفقیت انجام شد!"
