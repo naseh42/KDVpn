@@ -60,8 +60,8 @@ echo "شروع پیکربندی MySQL ..."
 
 # درخواست پسورد MySQL
 read -sp "Enter MySQL root password: " mysql_root_password
-mysql -e "CREATE DATABASE kurdan;"
-mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_password}';"
+mysql -e "CREATE DATABASE IF NOT EXISTS kurdan;"
+mysql -e "CREATE USER IF NOT EXISTS 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_password}';"
 mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
@@ -118,46 +118,25 @@ echo "{
   {
     'protocol': 'xtcp',
     'settings': {
-...
-" > /etc/sing-box/config.json
+      ...
+    }
+  }]
+}" > /etc/sing-box/config.json
 
-# --- اضافه کردن مراحل نصب پنل Kurdan ---
+# تغییر مسیر به دایرکتوری نصب پنل
+cd /var/www/html
 
-# مسیر نصب پروژه را تنظیم کنیم
-INSTALL_DIR="/var/www/html/kurdan"
-
-# اگر دایرکتوری مقصد قبلاً وجود داشته باشد، حذف کنیم
-if [ -d "$INSTALL_DIR" ]; then
-    echo "دایرکتوری قبلاً وجود دارد. حذف آن ..."
-    rm -rf "$INSTALL_DIR"
+# کلون کردن مخزن از گیت‌هاب به دایرکتوری صحیح
+if [ ! -d "/var/www/html/kurdan" ]; then
+  echo "دایرکتوری kurdan موجود نیست. شروع کلون کردن مخزن از گیت‌هاب ..."
+  git clone https://github.com/naseh42/KDVpn.git /var/www/html/kurdan
 fi
 
-# کلون کردن مخزن از گیت‌هاب به مسیر نصب
-echo "کلون کردن مخزن از گیت‌هاب ..."
-git clone https://github.com/naseh42/KDVpn.git "$INSTALL_DIR"
-
-# وارد دایرکتوری پروژه شده و نصب npm
-cd "$INSTALL_DIR" || exit
-echo "نصب وابستگی‌های npm ..."
+# نصب npm و وابستگی‌ها
+cd /var/www/html/kurdan
 npm install
 
-# اطمینان حاصل کنیم که فایل `package.json` در دایرکتوری پروژه موجود باشد
-if [ ! -f "package.json" ]; then
-    echo "فایل package.json پیدا نشد! ایجاد فایل package.json ..."
-    echo '{
-        "name": "kurdan",
-        "version": "1.0.0",
-        "main": "index.js",
-        "dependencies": {
-            "express": "^4.17.1",
-            "npm": "^7.20.3"
-        }
-    }' > package.json
-    npm install
-fi
+# پیکربندی Nginx
+echo "🔧 پیکربندی Nginx ..."
 
-# شروع پیکربندی nginx
-echo "پیکربندی Nginx ..."
-# این بخش به پیکربندی و ایجاد فایل کانفیگ Nginx شما مربوط می‌شود
-
-echo "نصب و پیکربندی تمام شد!"
+# ... بقیه تنظیمات Nginx و سایر موارد
