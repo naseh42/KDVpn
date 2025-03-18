@@ -1,105 +1,80 @@
 #!/bin/bash
 
-# مراحل نصب و پیکربندی XRay و Sing-box
-echo "شروع نصب XRay و Sing-box ..."
-
-# نصب پیش‌نیازها
+# 1. بررسی و نصب پیش‌نیازها
+echo "شروع نصب پیش‌نیازها ..."
 apt update && apt upgrade -y
-apt install -y wget curl ufw mysql-server git
+apt install -y wget curl ufw mysql-server git unzip
 
-# تنظیمات فایروال
-ufw allow OpenSSH
-ufw allow 80,443/tcp
-ufw enable
+# 2. بررسی و نصب XRay
+echo "بررسی وجود XRay ..."
+if ! command -v xray &> /dev/null; then
+    echo "XRay یافت نشد. دانلود و نصب XRay ..."
+    wget https://github.com/XTLS/Xray-core/releases/download/v1.5.0/Xray-linux-amd64-1.5.0.zip -O /root/Xray-linux-64.zip
+    unzip /root/Xray-linux-64.zip -d /usr/local/xray
+    chmod +x /usr/local/xray/xray
+    rm /root/Xray-linux-64.zip
+    echo "XRay نصب شد."
+else
+    echo "XRay قبلاً نصب شده است."
+fi
 
-# دانلود و نصب XRay
-wget https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
-unzip Xray-linux-64.zip -d /usr/local/xray/
-chmod +x /usr/local/xray/xray
-
-# دانلود و نصب Sing-box
+# 3. بررسی و نصب Sing-box
 echo "بررسی وجود Sing-box ..."
-if [ ! -d "/usr/local/sing-box" ]; then
-    wget https://github.com/SagerNet/sing-box/releases/latest/download/sing-box-linux-amd64.tar.gz
-    tar -zxvf sing-box-linux-amd64.tar.gz -C /usr/local/
-    chmod +x /usr/local/sing-box
+if ! command -v sing-box &> /dev/null; then
+    echo "Sing-box یافت نشد. دانلود و نصب Sing-box ..."
+    wget https://github.com/SagerNet/sing-box/releases/download/v1.11.5/sing-box-linux-amd64.tar.gz -O /root/sing-box-linux-64.tar.gz
+    tar -zxvf /root/sing-box-linux-64.tar.gz -C /usr/local/
+    chmod +x /usr/local/sing-box/sing-box
+    rm /root/sing-box-linux-64.tar.gz
+    echo "Sing-box نصب شد."
 else
     echo "Sing-box قبلاً نصب شده است."
 fi
 
-# بررسی و ساخت پوشه‌های مورد نیاز
+# 4. بررسی و ساخت پوشه‌ها
 echo "بررسی پوشه‌ها و ساخت پوشه‌های لازم ..."
-mkdir -p /root/KDVpn/backend/templates
-mkdir -p /root/KDVpn/backend/static/css
+mkdir -p /root/KDVpn/backend /root/KDVpn/backend/templates /root/KDVpn/backend/static/css
 
-# انتقال فایل‌های HTML به دایرکتوری templates
+# 5. انتقال فایل‌های HTML به پوشه templates
 echo "انتقال فایل‌های HTML به پوشه templates ..."
-mv /root/KDVpn/dashboard.html /root/KDVpn/backend/templates/
-mv /root/KDVpn/users.html /root/KDVpn/backend/templates/
-mv /root/KDVpn/domains.html /root/KDVpn/backend/templates/
-mv /root/KDVpn/settings.html /root/KDVpn/backend/templates/
+for file in /root/KDVpn/*.html; do
+    if [[ -f $file ]]; then
+        mv "$file" /root/KDVpn/backend/templates/
+        echo "انتقال فایل HTML: $file"
+    fi
+done
 
-# انتقال فایل‌های Python به دایرکتوری backend
+# 6. انتقال فایل‌های Python به پوشه backend
 echo "انتقال فایل‌های Python به پوشه backend ..."
-mv /root/KDVpn/main.py /root/KDVpn/backend/
+for file in /root/KDVpn/*.py; do
+    if [[ -f $file ]]; then
+        mv "$file" /root/KDVpn/backend/
+        echo "انتقال فایل Python: $file"
+    fi
+done
 
-# انتقال فایل‌های CSS به دایرکتوری static/css
+# 7. انتقال فایل‌های CSS به پوشه static/css
 echo "انتقال فایل‌های CSS به پوشه static/css ..."
-mv /root/KDVpn/styles.css /root/KDVpn/backend/static/css/
+for file in /root/KDVpn/*.css; do
+    if [[ -f $file ]]; then
+        mv "$file" /root/KDVpn/backend/static/css/
+        echo "انتقال فایل CSS: $file"
+    fi
+done
 
-# ایجاد سرویس‌ها برای XRay و Sing-box
-echo "[Unit]
-Description=XRay service
-After=network.target
-
-[Service]
-ExecStart=/usr/local/xray/xray run
-Restart=on-failure
-User=nobody
-
-[Install]
-WantedBy=multi-user.target" > /etc/systemd/system/xray.service
-
-echo "[Unit]
-Description=Sing-box service
-After=network.target
-
-[Service]
-ExecStart=/usr/local/sing-box run
-Restart=on-failure
-User=nobody
-
-[Install]
-WantedBy=multi-user.target" > /etc/systemd/system/sing-box.service
-
-# فعال‌سازی و شروع سرویس‌ها
-systemctl enable xray
-systemctl enable sing-box
-systemctl start xray
-systemctl start sing-box
-
-# پیکربندی پایگاه‌داده MySQL
+# 8. پیکربندی MySQL
 echo "شروع پیکربندی MySQL ..."
-
-# حذف دیتابیس و کاربر قبلی در صورت وجود
-mysql -e "DROP DATABASE IF EXISTS kurdan;"
-mysql -e "DROP USER IF EXISTS 'kurdan_user'@'localhost';"
-
-# درخواست پسورد MySQL
 read -sp "Enter MySQL root password: " mysql_root_password
-mysql -e "CREATE DATABASE kurdan;"
-mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_password}';"
-mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
-mysql -e "FLUSH PRIVILEGES;"
+mysql -u root -p"${mysql_root_password}" -e "CREATE DATABASE IF NOT EXISTS kurdan;"
+mysql -u root -p"${mysql_root_password}" -e "CREATE USER IF NOT EXISTS 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_password}';"
+mysql -u root -p"${mysql_root_password}" -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
+mysql -u root -p"${mysql_root_password}" -e "FLUSH PRIVILEGES;"
 
-# پیکربندی XRay و Sing-box
-mkdir -p /etc/xray
-mkdir -p /etc/sing-box
+# 9. پیکربندی XRay و Sing-box
+echo "پیکربندی XRay و Sing-box ..."
+mkdir -p /etc/xray /etc/sing-box
 
-# تنظیمات اولیه برای XRay و Sing-box
-echo "Setting up XRay and Sing-box configs ..."
-
-# اضافه کردن فایل کانفیگ XRay
+# کانفیگ XRay
 echo "{
   'inbounds': [{
     'port': 10086,
@@ -123,7 +98,7 @@ echo "{
   }]
 }" > /etc/xray/config.json
 
-# اضافه کردن فایل کانفیگ Sing-box
+# کانفیگ Sing-box
 echo "{
   'log': {
     'level': 'info',
@@ -145,17 +120,21 @@ echo "{
   {
     'protocol': 'xtcp',
     'settings': {
-      'vnext': [{
-        'address': 'example.com',
-        'port': 443,
-        'users': [{
-          'id': 'uuid-generated-here',
-          'alterId': 64
-        }]
+      'address': 'example.com',
+      'port': 443,
+      'users': [{
+        'id': 'uuid-generated-here',
+        'alterId': 64
       }]
     }
   }]
 }" > /etc/sing-box/config.json
 
-# نمایش پیغام نهایی
-echo "تمامی فایل‌ها به دایرکتوری‌های مناسب منتقل شدند و نصب به اتمام رسید!"
+# 10. راه‌اندازی XRay و Sing-box
+echo "فعال‌سازی سرویس‌ها ..."
+systemctl enable xray
+systemctl enable sing-box
+systemctl start xray
+systemctl start sing-box
+
+echo "تمامی مراحل با موفقیت به پایان رسید!"
