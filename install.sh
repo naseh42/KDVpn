@@ -42,22 +42,26 @@ mkdir -p /var/www/KDVpn/backend/routers
 
 # تولید فایل requirements.txt
 echo -e "${GREEN}ایجاد فایل requirements.txt...${NC}"
-cat <<EOL > requirements.txt
+cat <<EOL > /var/www/KDVpn/backend/requirements.txt
 fastapi
 sqlalchemy
 mysql-connector-python
 jinja2
 python-decouple
 EOL
+echo -e "${GREEN}فایل requirements.txt با موفقیت ایجاد شد.${NC}"
 
 # تنظیم محیط مجازی pip
 echo -e "${GREEN}ایجاد محیط مجازی برای pip...${NC}"
+cd /var/www/KDVpn/backend/
 python3 -m venv env
 source env/bin/activate
 
 # نصب کتابخانه‌های پایتون
 echo -e "${GREEN}نصب کتابخانه‌های پایتون...${NC}"
 pip install -r requirements.txt
+deactivate
+echo -e "${GREEN}وابستگی‌ها با موفقیت نصب شدند.${NC}"
 
 # انتقال فایل‌ها بر اساس نوع به پوشه‌های مناسب (فیلتر کردن env)
 echo -e "${GREEN}پیدا کردن و انتقال فایل‌های پروژه...${NC}"
