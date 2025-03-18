@@ -34,8 +34,8 @@ bind-address = 127.0.0.1
 EOL
 service mysql restart
 
-# ایجاد پوشه‌های پروژه
-echo -e "${GREEN}ایجاد پوشه‌های پروژه...${NC}"
+# ایجاد پوشه‌های لازم بر اساس ساختار
+echo -e "${GREEN}ایجاد پوشه‌های موردنیاز...${NC}"
 mkdir -p /var/www/KDVpn/backend/templates
 mkdir -p /var/www/KDVpn/backend/static/css
 mkdir -p /var/www/KDVpn/backend/routers
