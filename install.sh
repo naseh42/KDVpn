@@ -65,6 +65,10 @@ echo -e "${GREEN}پیدا کردن و انتقال فایل‌های پروژه.
 move_file() {
     FILE_NAME=$1
     DEST_DIR=$2
+
+    # مطمئن شوید پوشه مقصد وجود دارد
+    mkdir -p "$DEST_DIR"
+
     FILE_PATH=$(find . -type f -name "$FILE_NAME" 2>/dev/null | head -n 1)
     
     if [ -n "$FILE_PATH" ]; then
@@ -79,9 +83,9 @@ move_file "app.py" "/var/www/KDVpn/backend/"
 move_file "database.py" "/var/www/KDVpn/backend/"
 move_file "models.py" "/var/www/KDVpn/backend/"
 move_file "schemas.py" "/var/www/KDVpn/backend/"
-move_file "routers/*" "/var/www/KDVpn/backend/routers/"
-move_file "templates/*" "/var/www/KDVpn/backend/templates/"
-move_file "css/*" "/var/www/KDVpn/backend/static/css/"
+move_file "routers" "/var/www/KDVpn/backend/routers/"
+move_file "templates" "/var/www/KDVpn/backend/templates/"
+move_file "css" "/var/www/KDVpn/backend/static/css/"
 
 # تنظیم Nginx
 echo -e "${GREEN}تنظیم Nginx...${NC}"
