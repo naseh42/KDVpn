@@ -29,23 +29,23 @@ fi
 
 # بررسی و ساخت پوشه‌های مورد نیاز
 echo "بررسی پوشه‌ها و ساخت پوشه‌های لازم ..."
-mkdir -p /path/to/KDVpn/backend/templates
-mkdir -p /path/to/KDVpn/backend/static/css
+mkdir -p /root/KDVpn/backend/templates
+mkdir -p /root/KDVpn/backend/static/css
 
 # انتقال فایل‌های HTML به دایرکتوری templates
 echo "انتقال فایل‌های HTML به پوشه templates ..."
-mv /path/to/downloaded/dashboard.html /path/to/KDVpn/backend/templates/
-mv /path/to/downloaded/users.html /path/to/KDVpn/backend/templates/
-mv /path/to/downloaded/domains.html /path/to/KDVpn/backend/templates/
-mv /path/to/downloaded/settings.html /path/to/KDVpn/backend/templates/
+mv /root/KDVpn/dashboard.html /root/KDVpn/backend/templates/
+mv /root/KDVpn/users.html /root/KDVpn/backend/templates/
+mv /root/KDVpn/domains.html /root/KDVpn/backend/templates/
+mv /root/KDVpn/settings.html /root/KDVpn/backend/templates/
 
 # انتقال فایل‌های Python به دایرکتوری backend
 echo "انتقال فایل‌های Python به پوشه backend ..."
-mv /path/to/downloaded/main.py /path/to/KDVpn/backend/
+mv /root/KDVpn/main.py /root/KDVpn/backend/
 
 # انتقال فایل‌های CSS به دایرکتوری static/css
 echo "انتقال فایل‌های CSS به پوشه static/css ..."
-mv /path/to/downloaded/styles.css /path/to/KDVpn/backend/static/css/
+mv /root/KDVpn/styles.css /root/KDVpn/backend/static/css/
 
 # ایجاد سرویس‌ها برای XRay و Sing-box
 echo "[Unit]
@@ -80,6 +80,10 @@ systemctl start sing-box
 
 # پیکربندی پایگاه‌داده MySQL
 echo "شروع پیکربندی MySQL ..."
+
+# حذف دیتابیس و کاربر قبلی در صورت وجود
+mysql -e "DROP DATABASE IF EXISTS kurdan;"
+mysql -e "DROP USER IF EXISTS 'kurdan_user'@'localhost';"
 
 # درخواست پسورد MySQL
 read -sp "Enter MySQL root password: " mysql_root_password
