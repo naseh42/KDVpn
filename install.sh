@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# تعریف رنگ‌ها برای نمایش پیام
+# تعریف رنگ‌ها برای پیام‌ها
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
@@ -19,7 +19,7 @@ apt update && apt upgrade -y
 
 # نصب ابزارهای ضروری
 echo -e "${GREEN}نصب ابزارهای ضروری...${NC}"
-apt install -y python3 python3-pip git curl wget unzip tar nginx mysql-server
+apt install -y python3 python3-pip python3.10-venv git curl wget unzip tar nginx mysql-server
 
 # تنظیم و راه‌اندازی MySQL
 echo -e "${GREEN}نصب و تنظیم MySQL...${NC}"
@@ -83,8 +83,13 @@ move_file "routers/*" "/var/www/KDVpn/backend/routers/"
 move_file "templates/*" "/var/www/KDVpn/backend/templates/"
 move_file "css/*" "/var/www/KDVpn/backend/static/css/"
 
-# تنظیمات Nginx
+# تنظیم Nginx
 echo -e "${GREEN}تنظیم Nginx...${NC}"
+if [ -L "/etc/nginx/sites-enabled/KDVpn" ]; then
+    echo -e "${RED}لینک نمادین قبلی یافت شد. حذف می‌شود...${NC}"
+    rm -f /etc/nginx/sites-enabled/KDVpn
+fi
+
 cat <<EOL > /etc/nginx/sites-available/KDVpn
 server {
     listen 80;
