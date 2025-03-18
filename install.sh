@@ -1,11 +1,9 @@
 #!/bin/bash
 
-# مراحل نصب و پیکربندی XRay و Sing-box
-echo "شروع نصب XRay و Sing-box ..."
-
 # نصب پیش‌نیازها
+echo "شروع نصب پیش‌نیازها ..."
 apt update && apt upgrade -y
-apt install -y wget curl ufw mysql-server git
+apt install -y wget curl ufw mysql-server git nginx jq
 
 # تنظیمات فایروال
 ufw allow OpenSSH
@@ -13,19 +11,37 @@ ufw allow 80,443/tcp
 ufw enable
 
 # دانلود و نصب XRay
-wget https://github.com/XTLS/Xray-core/releases/download/v1.5.0/Xray-linux-amd64-1.5.0.tar.gz
-tar -zxvf Xray-linux-amd64-1.5.0.tar.gz
-mv xray /usr/local/bin/
+echo "در حال دانلود XRay ..."
+XRay_LATEST=$(wget -qO- "https://api.github.com/repos/XTLS/Xray-core/releases/latest" | jq -r .assets[0].browser_download_url)
+wget $XRay_LATEST -O /tmp/XRay-linux-amd64-latest.tar.gz
+
+# بررسی دانلود موفقیت‌آمیز XRay
+if [ ! -f "/tmp/XRay-linux-amd64-latest.tar.gz" ]; then
+    echo "خطا در دانلود XRay"
+    exit 1
+fi
+
+tar -zxvf /tmp/XRay-linux-amd64-latest.tar.gz -C /tmp
+mv /tmp/xray /usr/local/bin/
 chmod +x /usr/local/bin/xray
 
 # دانلود و نصب Sing-box
-wget https://github.com/SagerNet/sing-box/releases/download/v1.0.0/sing-box-linux-amd64.tar.gz
-tar -zxvf sing-box-linux-amd64.tar.gz
-mv sing-box /usr/local/bin/
+echo "در حال دانلود Sing-box ..."
+SingBox_LATEST=$(wget -qO- "https://api.github.com/repos/SagerNet/sing-box/releases/latest" | jq -r .assets[0].browser_download_url)
+wget $SingBox_LATEST -O /tmp/sing-box-linux-amd64-latest.tar.gz
+
+# بررسی دانلود موفقیت‌آمیز Sing-box
+if [ ! -f "/tmp/sing-box-linux-amd64-latest.tar.gz" ]; then
+    echo "خطا در دانلود Sing-box"
+    exit 1
+fi
+
+tar -zxvf /tmp/sing-box-linux-amd64-latest.tar.gz -C /tmp
+mv /tmp/sing-box /usr/local/bin/
 chmod +x /usr/local/bin/sing-box
 
 # ایجاد سرویس‌ها برای XRay و Sing-box
-echo "[Unit]"
+echo "[Unit]
 Description=XRay service
 After=network.target
 
@@ -37,7 +53,7 @@ User=nobody
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/xray.service
 
-echo "[Unit]"
+echo "[Unit]
 Description=Sing-box service
 After=network.target
 
@@ -49,7 +65,7 @@ User=nobody
 [Install]
 WantedBy=multi-user.target" > /etc/systemd/system/sing-box.service
 
-# فعال‌سازی و شروع سرویس‌ها
+# فعال‌سازی سرویس‌ها
 systemctl enable xray
 systemctl enable sing-box
 systemctl start xray
@@ -57,8 +73,6 @@ systemctl start sing-box
 
 # پیکربندی پایگاه‌داده MySQL
 echo "شروع پیکربندی MySQL ..."
-
-# درخواست پسورد MySQL
 read -sp "Enter MySQL root password: " mysql_root_password
 mysql -e "CREATE DATABASE kurdan;"
 mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_password}';"
@@ -66,94 +80,88 @@ mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
 # پیکربندی XRay و Sing-box
+echo "در حال تنظیم فایل‌های پیکربندی XRay و Sing-box ..."
 mkdir -p /etc/xray
 mkdir -p /etc/sing-box
 
-# تنظیمات اولیه برای XRay و Sing-box
-echo "Setting up XRay and Sing-box configs ..."
-
-# اضافه کردن فایل کانفیگ XRay
+# تنظیمات اولیه XRay
 echo "{
-  'inbounds': [{
-    'port': 10086,
-    'protocol': 'vmess',
-    'settings': {
-      'clients': [{
-        'id': 'uuid-generated-here',
-        'alterId': 64
-      }]
-    }
-  },
-  {
-    'port': 10087,
-    'protocol': 'hysteria',
-    'settings': {
-      'clients': [{
-        'id': 'uuid-generated-here',
-        'alterId': 64
+  \"inbounds\": [{
+    \"port\": 10086,
+    \"protocol\": \"vmess\",
+    \"settings\": {
+      \"clients\": [{
+        \"id\": \"uuid-generated-here\",
+        \"alterId\": 64
       }]
     }
   }]
 }" > /etc/xray/config.json
 
-# اضافه کردن فایل کانفیگ Sing-box
+# تنظیمات اولیه Sing-box
 echo "{
-  'log': {
-    'level': 'info',
-    'output': 'stdout'
+  \"log\": {
+    \"level\": \"info\",
+    \"output\": \"stdout\"
   },
-  'outbounds': [{
-    'protocol': 'vmess',
-    'settings': {
-      'vnext': [{
-        'address': 'example.com',
-        'port': 443,
-        'users': [{
-          'id': 'uuid-generated-here',
-          'alterId': 64
-        }]
-      }]
-    }
-  },
-  {
-    'protocol': 'xtcp',
-    'settings': {
-      'vnext': [{
-        'address': 'example.com',
-        'port': 443,
-        'users': [{
-          'id': 'uuid-generated-here',
-          'alterId': 64
+  \"outbounds\": [{
+    \"protocol\": \"vmess\",
+    \"settings\": {
+      \"vnext\": [{
+        \"address\": \"example.com\",
+        \"port\": 443,
+        \"users\": [{
+          \"id\": \"uuid-generated-here\",
+          \"alterId\": 64
         }]
       }]
     }
   }]
 }" > /etc/sing-box/config.json
 
-# انتقال فایل‌ها به دایرکتوری مناسب
+# ساخت دایرکتوری‌های پنل Kurdan
+echo "ساخت دایرکتوری‌ها برای پنل Kurdan ..."
+mkdir -p /var/www/html/kurdan/templates
+mkdir -p /var/www/html/kurdan/static/css
 
-# انتقال فایل‌های HTML به دایرکتوری templates
-mkdir -p /path/to/KDVpn/backend/templates
-cp -r /path/to/dashboards /path/to/KDVpn/backend/templates
-cp -r /path/to/users.html /path/to/KDVpn/backend/templates
-cp -r /path/to/domains.html /path/to/KDVpn/backend/templates
-cp -r /path/to/settings.html /path/to/KDVpn/backend/templates
+# انتقال فایل‌ها به مسیرهای صحیح
+echo "انتقال فایل‌ها به دایرکتوری‌های مناسب ..."
+cp /path/to/dashboard.html /var/www/html/kurdan/templates/
+cp /path/to/users.html /var/www/html/kurdan/templates/
+cp /path/to/domains.html /var/www/html/kurdan/templates/
+cp /path/to/settings.html /var/www/html/kurdan/templates/
+cp /path/to/styles.css /var/www/html/kurdan/static/css/
 
-# انتقال فایل CSS به دایرکتوری static/css
-mkdir -p /path/to/KDVpn/backend/static/css
-cp /path/to/styles.css /path/to/KDVpn/backend/static/css
+# پیکربندی Nginx
+echo "پیکربندی Nginx برای دسترسی به پنل ..."
+cat <<EOF > /etc/nginx/sites-available/kurdan
+server {
+    listen 80;
+    server_name example.com;
 
-# پیکربندی یونی‌کورن
-echo "پیکربندی یونی‌کورن برای اجرای فایل اصلی پنل به جای min.py به app.py..."
+    root /var/www/html/kurdan;
 
-# پیکربندی یونی‌کورن
+    location / {
+        try_files \$uri /index.html;
+    }
+}
+EOF
+
+ln -s /etc/nginx/sites-available/kurdan /etc/nginx/sites-enabled/
+systemctl restart nginx
+
+# نصب Gunicorn
+echo "نصب Gunicorn ..."
+pip install gunicorn
+
+# پیکربندی Gunicorn برای اجرای اپلیکیشن پنل
 cat <<EOF > /etc/systemd/system/kurdan.service
 [Unit]
 Description=Kurdan Panel
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/gunicorn -w 4 -b 0.0.0.0:8000 app:app
+ExecStart=/usr/local/bin/gunicorn --workers 3 --bind 0.0.0.0:8000 app:app
 WorkingDirectory=/path/to/KDVpn/backend
 User=nobody
 Group=nogroup
@@ -162,30 +170,9 @@ Group=nogroup
 WantedBy=multi-user.target
 EOF
 
-# راه‌اندازی سرویس‌ها
+# فعال‌سازی و شروع سرویس Gunicorn
 systemctl enable kurdan
 systemctl start kurdan
 
-# تنظیمات Nginx (در صورت نیاز)
-echo "پیکربندی Nginx برای دسترسی به پنل..."
-
-cat <<EOF > /etc/nginx/sites-available/kurdan
-server {
-    listen 80;
-    server_name example.com;
-    root /path/to/KDVpn/backend;
-
-    location / {
-        proxy_pass http://127.0.0.1:8000;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-    }
-}
-EOF
-
-ln -s /etc/nginx/sites-available/kurdan /etc/nginx/sites-enabled/
-systemctl restart nginx
-
+# پایان نصب
 echo "نصب و پیکربندی پنل Kurdan با موفقیت انجام شد!"
