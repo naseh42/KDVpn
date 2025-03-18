@@ -1,0 +1,31 @@
+<!-- backend/templates/domains.html -->
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <title>مدیریت دامنه‌ها</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container mx-auto mt-10">
+        <h1 class="text-2xl font-bold mb-4">{{ "Domain Management" if lang == "en" else "مدیریت دامنه‌ها" }}</h1>
+        <form action="/add_domain" method="post">
+            <label for="domain">{{ "Domain Name" if lang == "en" else "نام دامنه" }}:</label>
+            <input type="text" id="domain" name="domain" required>
+            <button type="submit">{{ "Add Domain" if lang == "en" else "افزودن دامنه" }}</button>
+        </form>
+        <h2 class="mt-6">{{ "Existing Domains" if lang == "en" else "دامنه‌های موجود" }}</h2>
+        <ul>
+            {% for domain in domains %}
+                <li>
+                    {{ domain }}
+                    <form action="/delete_domain" method="post" style="display:inline;">
+                        <input type="hidden" name="domain" value="{{ domain }}">
+                        <button type="submit">{{ "Delete" if lang == "en" else "حذف" }}</button>
+                    </form>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+</body>
+</html>
