@@ -1,0 +1,23 @@
+<!-- backend/templates/settings.html -->
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <title>تنظیمات</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container mx-auto mt-10">
+        <h1 class="text-2xl font-bold mb-4">{{ "Settings" if lang == "en" else "تنظیمات" }}</h1>
+        <form action="/update_settings" method="post">
+            <label for="proxy_type">{{ "Proxy Type" if lang == "en" else "نوع پروکسی" }}:</label>
+            <select id="proxy_type" name="proxy_type">
+                <option value="vmess">{{ "VMess" if lang == "en" else "وی‌مِس" }}</option>
+                <option value="trojan">{{ "Trojan" if lang == "en" else "ترجان" }}</option>
+                <option value="hysteria">{{ "Hysteria" if lang == "en" else "هیستریا" }}</option>
+            </select>
+            <button type="submit">{{ "Update Settings" if lang == "en" else "بروزرسانی تنظیمات" }}</button>
+        </form>
+    </div>
+</body>
+</html>
