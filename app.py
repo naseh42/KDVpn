@@ -1,50 +1,36 @@
-from fastapi import FastAPI, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
+from fastapi import APIRouter, Depends
+from sqlalchemy.orm import Session
+from . import models, database, schemas
 
-# تعریف FastAPI
-app = FastAPI()
+router = APIRouter()
 
-# تعریف مسیرهای قالب‌ها
-templates = Jinja2Templates(directory="backend/templates")
+# اضافه کردن کاربر جدید
+@router.post("/users")
+def create_user(user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+    db_user = models.User(
+        username=user.username,
+        uuid=user.uuid,
+        traffic_limit=user.traffic_limit,
+        usage_duration=user.usage_duration,
+        simultaneous_connections=user.simultaneous_connections
+    )
+    db_user.set_expiry_date()  # محاسبه تاریخ انقضا
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
 
-# صفحه داشبورد
-@app.get("/", response_class=HTMLResponse)
-async def dashboard(request: Request, lang: str = "fa"):
-    # مقادیر نمونه برای username و traffic
-    username = "Ali"  # این مقدار می‌تواند از دیتابیس یا هر منبع دیگری دریافت شود
-    traffic = 5  # حجم باقی‌مانده به گیگابایت
-
-    return templates.TemplateResponse("dashboard.html", {
-        "request": request,
-        "lang": lang,
-        "username": username,  # ارسال username به قالب
-        "traffic": traffic     # ارسال traffic به قالب
-    })
-
-# صفحه مدیریت کاربران
-@app.get("/users", response_class=HTMLResponse)
-async def users(request: Request, lang: str = "fa"):
-    # دریافت داده‌های کاربران از پایگاه داده
-    users = [
-        {"name": "Ali", "uuid": "1234", "expiry": "2025-12-31"},
-        {"name": "Reza", "uuid": "5678", "expiry": "2025-12-31"},
-    ]
-    return templates.TemplateResponse("users.html", {"request": request, "lang": lang, "users": users})
-
-# صفحه مدیریت دامنه‌ها
-@app.get("/domains", response_class=HTMLResponse)
-async def domains(request: Request, lang: str = "fa"):
-    # دریافت لیست دامنه‌ها از پایگاه داده
-    domains = ["example.com", "test.com"]
-    return templates.TemplateResponse("domains.html", {"request": request, "lang": lang, "domains": domains})
-
-# صفحه تنظیمات
-@app.get("/settings", response_class=HTMLResponse)
-async def settings(request: Request, lang: str = "fa"):
-    # در اینجا می‌توانید تنظیمات لازم را برگردانید
-    settings_data = {
-        "setting1": "value1",
-        "setting2": "value2",
-    }
-    return templates.TemplateResponse("settings.html", {"request": request, "lang": lang, "settings": settings_data})
+# ویرایش کاربر
+@router.put("/users/{user_id}")
+def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(database.get_db)):
+    db_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if db_user:
+        db_user.username = user.username
+        db_user.traffic_limit = user.traffic_limit
+        db_user.usage_duration = user.usage_duration
+        db_user.simultaneous_connections = user.simultaneous_connections
+        db_user.set_expiry_date()  # به‌روز رسانی تاریخ انقضا
+        db.commit()
+        db.refresh(db_user)
+        return db_user
+    return {"message": "User not found"}
