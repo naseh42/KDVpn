@@ -59,7 +59,7 @@ source env/bin/activate
 echo -e "${GREEN}نصب کتابخانه‌های پایتون...${NC}"
 pip install -r requirements.txt
 
-# انتقال فایل‌ها بر اساس نوع به پوشه‌های مناسب
+# انتقال فایل‌ها بر اساس نوع به پوشه‌های مناسب (فیلتر کردن env)
 echo -e "${GREEN}پیدا کردن و انتقال فایل‌های پروژه...${NC}"
 
 move_files_by_extension() {
@@ -69,8 +69,8 @@ move_files_by_extension() {
     # مطمئن شوید پوشه مقصد وجود دارد
     mkdir -p "$DEST_DIR"
 
-    # پیدا کردن و انتقال فایل‌ها
-    FILE_PATHS=$(find . -type f -name "*.$FILE_EXTENSION" 2>/dev/null)
+    # پیدا کردن و انتقال فایل‌ها به‌جز فایل‌های داخل env
+    FILE_PATHS=$(find . -path "./env" -prune -o -type f -name "*.$FILE_EXTENSION" -print 2>/dev/null)
     if [ -n "$FILE_PATHS" ]; then
         for FILE in $FILE_PATHS; do
             mv "$FILE" "$DEST_DIR"
