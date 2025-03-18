@@ -1,33 +1,20 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Domains Management</title>
+    <title>مدیریت دامنه‌ها</title>
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <h1>{{ 'Manage Domains' if lang == 'en' else 'مدیریت دامنه‌ها' }}</h1>
-
-    <h2>{{ 'Current Domains' if lang == 'en' else 'دامنه‌های موجود' }}</h2>
-    <ul>
-        {% for domain in domains %}
-            <li>{{ domain }}</li>
-        {% endfor %}
-    </ul>
-
-    <h3>{{ 'Add Domain' if lang == 'en' else 'افزودن دامنه' }}</h3>
-    <form method="post" action="/add-domain">
-        <input type="text" name="domain" placeholder="{{ 'Enter Domain' if lang == 'en' else 'نام دامنه را وارد کنید' }}">
-        <button type="submit">{{ 'Add' if lang == 'en' else 'افزودن' }}</button>
-    </form>
-
-    <h3>{{ 'Remove Domain' if lang == 'en' else 'حذف دامنه' }}</h3>
-    <form method="post" action="/remove-domain">
-        <input type="text" name="domain" placeholder="{{ 'Enter Domain' if lang == 'en' else 'نام دامنه را وارد کنید' }}">
-        <button type="submit">{{ 'Remove' if lang == 'en' else 'حذف' }}</button>
-    </form>
-
-    <a href="/dashboard">{{ 'Back to Dashboard' if lang == 'en' else 'بازگشت به داشبورد' }}</a>
+    <div class="container">
+        <h1>مدیریت دامنه‌ها</h1>
+        <ul>
+            {% for domain in domains %}
+                <li>{{ domain }} <a href="/delete_domain/{{ domain }}">حذف</a></li>
+            {% endfor %}
+        </ul>
+        <a href="/add_domain">اضافه کردن دامنه</a>
+    </div>
 </body>
 </html>
