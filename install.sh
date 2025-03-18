@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# تعریف رنگ‌ها برای پیام‌ها
+# تعریف رنگ‌ها برای نمایش پیام
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
@@ -50,31 +50,38 @@ jinja2
 python-decouple
 EOL
 
+# تنظیم محیط مجازی pip
+echo -e "${GREEN}ایجاد محیط مجازی برای pip...${NC}"
+python3 -m venv env
+source env/bin/activate
+
 # نصب کتابخانه‌های پایتون
 echo -e "${GREEN}نصب کتابخانه‌های پایتون...${NC}"
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 
-# دانلود و نصب Sing-box
-echo -e "${GREEN}دانلود و نصب Sing-box...${NC}"
-curl -L -o sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/latest/download/sing-box-linux-amd64-64.tar.gz
-tar -xzf sing-box.tar.gz -C /usr/local/bin/
-rm sing-box.tar.gz
+# انتقال فایل‌ها بر اساس جستجوی نام فایل‌ها
+echo -e "${GREEN}پیدا کردن و انتقال فایل‌های پروژه...${NC}"
 
-# دانلود و نصب XRay
-echo -e "${GREEN}دانلود و نصب XRay...${NC}"
-curl -L -o xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
-unzip xray.zip -d /usr/local/bin/
-rm xray.zip
+move_file() {
+    FILE_NAME=$1
+    DEST_DIR=$2
+    FILE_PATH=$(find . -type f -name "$FILE_NAME" 2>/dev/null | head -n 1)
+    
+    if [ -n "$FILE_PATH" ]; then
+        mv "$FILE_PATH" "$DEST_DIR"
+        echo -e "${GREEN}$FILE_NAME انتقال یافت به $DEST_DIR${NC}"
+    else
+        echo -e "${RED}$FILE_NAME یافت نشد.${NC}"
+    fi
+}
 
-# انتقال فایل‌های پروژه
-echo -e "${GREEN}انتقال فایل‌های پروژه از پوشه KDVpn...${NC}"
-mv KDVpn/app.py /var/www/KDVpn/backend/
-mv KDVpn/database.py /var/www/KDVpn/backend/
-mv KDVpn/models.py /var/www/KDVpn/backend/
-mv KDVpn/schemas.py /var/www/KDVpn/backend/
-mv KDVpn/routers/* /var/www/KDVpn/backend/routers/
-mv KDVpn/templates/* /var/www/KDVpn/backend/templates/
-mv KDVpn/static/css/* /var/www/KDVpn/backend/static/css/
+move_file "app.py" "/var/www/KDVpn/backend/"
+move_file "database.py" "/var/www/KDVpn/backend/"
+move_file "models.py" "/var/www/KDVpn/backend/"
+move_file "schemas.py" "/var/www/KDVpn/backend/"
+move_file "routers/*" "/var/www/KDVpn/backend/routers/"
+move_file "templates/*" "/var/www/KDVpn/backend/templates/"
+move_file "css/*" "/var/www/KDVpn/backend/static/css/"
 
 # تنظیمات Nginx
 echo -e "${GREEN}تنظیم Nginx...${NC}"
@@ -96,7 +103,7 @@ server {
 }
 EOL
 ln -s /etc/nginx/sites-available/KDVpn /etc/nginx/sites-enabled/
-nginx -t && systemctl restart nginx
+nginx -t && systemctl reload nginx
 
 # راه‌اندازی اپلیکیشن
 echo -e "${GREEN}راه‌اندازی اپلیکیشن...${NC}"
