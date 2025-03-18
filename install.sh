@@ -1,36 +1,43 @@
 #!/bin/bash
 
-# مراحل نصب و پیکربندی XRay و Sing-box و FastAPI
-echo "شروع نصب پیش‌نیازها ..."
+# مراحل نصب و پیکربندی XRay و Sing-box
+echo "شروع نصب XRay و Sing-box ..."
 
 # نصب پیش‌نیازها
 apt update && apt upgrade -y
-apt install -y wget curl ufw mysql-server git python3-pip python3-dev
-
-# نصب FastAPI و سایر وابستگی‌ها
-pip3 install fastapi uvicorn mysql-connector pydantic
+apt install -y wget curl ufw mysql-server git python3-pip certbot python3-certbot-nginx
 
 # تنظیمات فایروال
 ufw allow OpenSSH
 ufw allow 80,443/tcp
 ufw enable
 
-# دانلود و نصب XRay
-echo "دانلود و نصب XRay ..."
-wget https://github.com/XTLS/Xray-core/releases/download/v1.5.0/Xray-linux-amd64-1.5.0.tar.gz
-tar -zxvf Xray-linux-amd64-1.5.0.tar.gz
-mv xray /usr/local/bin/
-chmod +x /usr/local/bin/xray
+# باز کردن پورت‌های اضافی برای XRay و Sing-box در فایروال
+ufw allow 10086/tcp
+ufw allow 10087/tcp
+ufw allow 443/tcp
 
-# دانلود و نصب Sing-box
-echo "دانلود و نصب Sing-box ..."
-wget https://github.com/SagerNet/sing-box/releases/download/v1.0.0/sing-box-linux-amd64.tar.gz
-tar -zxvf sing-box-linux-amd64.tar.gz
-mv sing-box /usr/local/bin/
-chmod +x /usr/local/bin/sing-box
+# دانلود و نصب XRay در صورتی که قبلاً نصب نشده باشد
+if [ ! -f "/usr/local/bin/xray" ]; then
+    wget https://github.com/XTLS/Xray-core/releases/download/v1.5.0/Xray-linux-amd64-1.5.0.tar.gz
+    tar -zxvf Xray-linux-amd64-1.5.0.tar.gz
+    mv xray /usr/local/bin/
+    chmod +x /usr/local/bin/xray
+else
+    echo "XRay already installed, skipping download."
+fi
+
+# دانلود و نصب Sing-box در صورتی که قبلاً نصب نشده باشد
+if [ ! -f "/usr/local/bin/sing-box" ]; then
+    wget https://github.com/SagerNet/sing-box/releases/download/v1.0.0/sing-box-linux-amd64.tar.gz
+    tar -zxvf sing-box-linux-amd64.tar.gz
+    mv sing-box /usr/local/bin/
+    chmod +x /usr/local/bin/sing-box
+else
+    echo "Sing-box already installed, skipping download."
+fi
 
 # ایجاد سرویس‌ها برای XRay و Sing-box
-echo "ایجاد سرویس‌ها برای XRay و Sing-box ..."
 echo "[Unit]
 Description=XRay service
 After=network.target
@@ -66,130 +73,163 @@ echo "شروع پیکربندی MySQL ..."
 
 # درخواست پسورد MySQL
 read -sp "Enter MySQL root password: " mysql_root_password
+
+# استفاده از پسورد پیچیده برای کاربر MySQL
 mysql -e "CREATE DATABASE kurdan;"
-mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_password}';"
+mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '$(openssl rand -base64 32)';"
 mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
 # پیکربندی XRay و Sing-box
-echo "تنظیمات اولیه برای XRay و Sing-box ..."
-
-# تنظیمات اولیه XRay
 mkdir -p /etc/xray
+mkdir -p /etc/sing-box
+
+# تنظیمات اولیه برای XRay و Sing-box
+echo "Setting up XRay and Sing-box configs ..."
+
+# ایجاد فایل کانفیگ XRay
 echo "{
-  'inbounds': [{
-    'port': 10086,
-    'protocol': 'vmess',
-    'settings': {
-      'clients': [{
-        'id': 'uuid-generated-here',
-        'alterId': 64
-      }]
+  \"inbounds\": [
+    {
+      \"port\": 10086,
+      \"protocol\": \"vmess\",
+      \"settings\": {
+        \"clients\": [
+          {
+            \"id\": \"$(uuidgen)\",
+            \"alterId\": 64
+          }
+        ]
+      }
+    },
+    {
+      \"port\": 10087,
+      \"protocol\": \"hysteria\",
+      \"settings\": {
+        \"clients\": [
+          {
+            \"id\": \"$(uuidgen)\",
+            \"alterId\": 64
+          }
+        ]
+      }
     }
-  },
-  {
-    'port': 10087,
-    'protocol': 'hysteria',
-    'settings': {
-      'clients': [{
-        'id': 'uuid-generated-here',
-        'alterId': 64
-      }]
-    }
-  }]
+  ]
 }" > /etc/xray/config.json
 
-# تنظیمات اولیه Sing-box
-mkdir -p /etc/sing-box
+# ایجاد فایل کانفیگ Sing-box
 echo "{
-  'log': {
-    'level': 'info',
-    'output': 'stdout'
+  \"log\": {
+    \"level\": \"info\",
+    \"output\": \"stdout\"
   },
-  'outbounds': [{
-    'protocol': 'vmess',
-    'settings': {
-      'vnext': [{
-        'address': 'example.com',
-        'port': 443,
-        'users': [{
-          'id': 'uuid-generated-here',
-          'alterId': 64
-        }]
-      }]
+  \"outbounds\": [
+    {
+      \"protocol\": \"vmess\",
+      \"settings\": {
+        \"vnext\": [
+          {
+            \"address\": \"example.com\",
+            \"port\": 443,
+            \"users\": [
+              {
+                \"id\": \"$(uuidgen)\",
+                \"alterId\": 64
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      \"protocol\": \"xtcp\",
+      \"settings\": {
+        \"vnext\": [
+          {
+            \"address\": \"example.com\",
+            \"port\": 443,
+            \"users\": [
+              {
+                \"id\": \"$(uuidgen)\",
+                \"alterId\": 64
+              }
+            ]
+          }
+        ]
+      }
     }
-  }]
+  ]
 }" > /etc/sing-box/config.json
 
-# نصب سرویس‌های لازم برای پروژه
-echo "نصب و راه‌اندازی FastAPI ..."
-# راه‌اندازی FastAPI با Uvicorn
-systemctl enable uvicorn
-systemctl start uvicorn
+# نصب و راه‌اندازی FastAPI
+echo "شروع نصب FastAPI و راه‌اندازی پنل Kurdan ..."
 
-# تنظیمات اولیه برای FastAPI و اتصال به MySQL
-echo "تنظیمات اولیه برای FastAPI ..."
-echo "import mysql.connector
-from fastapi import FastAPI
-from pydantic import BaseModel
-from typing import List
+# نصب وابستگی‌های Python
+pip3 install -r /home/kurdan_project/KDVpn/requirements.txt
 
-app = FastAPI()
+# ایجاد فایل run.sh برای اجرای FastAPI
+echo "#!/bin/bash
+# اجرای سرور FastAPI
+uvicorn main:app --reload --host 0.0.0.0 --port 8000" > /home/kurdan_project/KDVpn/run.sh
 
-# اتصال به دیتابیس
-def get_db_connection():
-    connection = mysql.connector.connect(
-        host='localhost',
-        user='kurdan_user',
-        password='${mysql_root_password}',
-        database='kurdan'
-    )
-    return connection
+chmod +x /home/kurdan_project/KDVpn/run.sh
 
-# مدل کاربر
-class User(BaseModel):
-    username: str
-    uuid: str
-    expiration_date: str
-    usage: int
+# ایجاد سرویس systemd برای FastAPI
+echo "[Unit]
+Description=Kurdan FastAPI Service
+After=network.target
 
-# ایجاد API برای مدیریت کاربران و سرورها
-@app.get('/users', response_model=List[User])
-def get_users():
-    connection = get_db_connection()
-    cursor = connection.cursor(dictionary=True)
-    cursor.execute('SELECT * FROM users')
-    users = cursor.fetchall()
-    connection.close()
-    return users
+[Service]
+ExecStart=/usr/local/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+WorkingDirectory=/home/kurdan_project/KDVpn
+User=www-data
+Group=www-data
+Restart=always
 
-@app.post('/users')
-def add_user(user: User):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute('INSERT INTO users (username, uuid, expiration_date, usage) VALUES (%s, %s, %s, %s)', 
-                   (user.username, user.uuid, user.expiration_date, user.usage))
-    connection.commit()
-    connection.close()
-    return {'message': 'User added successfully!'}
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/kurdan_fastapi.service
 
-@app.delete('/users/{uuid}')
-def delete_user(uuid: str):
-    connection = get_db_connection()
-    cursor = connection.cursor()
-    cursor.execute('DELETE FROM users WHERE uuid = %s', (uuid,))
-    connection.commit()
-    connection.close()
-    return {'message': 'User deleted successfully!'}
-" > /etc/fastapi/main.py
+# فعال‌سازی و شروع سرویس FastAPI
+systemctl enable kurdan_fastapi
+systemctl start kurdan_fastapi
 
-# ایجاد محیط مجازی و نصب FastAPI در آن
-python3 -m venv /etc/fastapi/venv
-source /etc/fastapi/venv/bin/activate
-pip install fastapi uvicorn mysql-connector pydantic
+# پیکربندی SSL با Certbot (Let's Encrypt)
+echo "شروع پیکربندی SSL ..."
 
-# راه‌اندازی سرویس FastAPI
-systemctl restart uvicorn
-systemctl enable uvicorn
+# درخواست دامنه از کاربر
+read -p "Enter your domain name (e.g., example.com): " domain_name
 
-echo "تمام مراحل نصب با موفقیت انجام شد!"
+# دریافت گواهی SSL از Let's Encrypt
+certbot --nginx -d "$domain_name" --non-interactive --agree-tos --email your-email@example.com
+
+# تنظیمات Nginx برای SSL
+echo "server {
+    listen 80;
+    server_name $domain_name;
+    return 301 https://\$server_name\$request_uri;
+}
+
+server {
+    listen 443 ssl;
+    server_name $domain_name;
+
+    ssl_certificate /etc/letsencrypt/live/$domain_name/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/$domain_name/privkey.pem;
+
+    location / {
+        proxy_pass http://localhost:8000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto \$scheme;
+    }
+}" > /etc/nginx/sites-available/$domain_name
+
+# ایجاد لینک نمادین برای فعال کردن سایت
+ln -s /etc/nginx/sites-available/$domain_name /etc/nginx/sites-enabled/
+
+# بارگذاری مجدد Nginx
+systemctl reload nginx
+
+# نهایی سازی نصب
+echo "نصب و راه‌اندازی با موفقیت انجام شد!"
