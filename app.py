@@ -11,7 +11,16 @@ templates = Jinja2Templates(directory="backend/templates")
 # صفحه داشبورد
 @app.get("/", response_class=HTMLResponse)
 async def dashboard(request: Request, lang: str = "fa"):
-    return templates.TemplateResponse("dashboard.html", {"request": request, "lang": lang})
+    # مقادیر نمونه برای username و traffic
+    username = "Ali"  # این مقدار می‌تواند از دیتابیس یا هر منبع دیگری دریافت شود
+    traffic = 5  # حجم باقی‌مانده به گیگابایت
+
+    return templates.TemplateResponse("dashboard.html", {
+        "request": request,
+        "lang": lang,
+        "username": username,  # ارسال username به قالب
+        "traffic": traffic     # ارسال traffic به قالب
+    })
 
 # صفحه مدیریت کاربران
 @app.get("/users", response_class=HTMLResponse)
