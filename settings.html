@@ -1,27 +1,29 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تنظیمات</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <h1>تنظیمات</h1>
-    <form action="/save-settings" method="POST">
-        <label for="language">زبان:</label>
-        <select name="language" id="language">
-            <option value="fa">فارسی</option>
-            <option value="en">انگلیسی</option>
-        </select>
-        <br>
-        <label for="proxy">انتخاب پروکسی:</label>
-        <select name="proxy" id="proxy">
-            <option value="vmess">VMess</option>
-            <option value="trojan">Trojan</option>
-            <option value="vless">VLESS</option>
-        </select>
-        <br>
-        <button type="submit">ذخیره تنظیمات</button>
-    </form>
+    <div class="container">
+        <h1>تنظیمات پیشرفته</h1>
+        <form action="/save_settings" method="POST">
+            <label for="lang">زبان:</label>
+            <select name="lang" id="lang">
+                <option value="fa" {% if lang == "fa" %}selected{% endif %}>فارسی</option>
+                <option value="en" {% if lang == "en" %}selected{% endif %}>انگلیسی</option>
+            </select>
+            <br>
+            <label for="proxy">انتخاب پروکسی:</label>
+            <select name="proxy" id="proxy">
+                <option value="XRay" {% if proxy == "XRay" %}selected{% endif %}>XRay</option>
+                <option value="Sing-box" {% if proxy == "Sing-box" %}selected{% endif %}>Sing-box</option>
+            </select>
+            <br>
+            <button type="submit">ذخیره تنظیمات</button>
+        </form>
+    </div>
 </body>
 </html>
