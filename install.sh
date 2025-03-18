@@ -78,29 +78,16 @@ from backend import models
 Base.metadata.create_all(bind=engine)
 "
 
-# 10. نصب و پیکربندی Unicorn
-echo "نصب و پیکربندی Unicorn ..."
-apt install -y ruby ruby-dev
-gem install unicorn
-
-cat > /root/KDVpn/backend/unicorn_config.rb <<EOL
-worker_processes 2
-working_directory "/root/KDVpn/backend"
-listen 8080
-timeout 30
-pid "/root/KDVpn/backend/unicorn.pid"
-stderr_path "/root/KDVpn/backend/unicorn.stderr.log"
-stdout_path "/root/KDVpn/backend/unicorn.stdout.log"
-EOL
-
-cat > /etc/systemd/system/unicorn.service <<EOL
+# 10. نصب و راه‌اندازی Uvicorn
+echo "راه‌اندازی سرور Uvicorn ..."
+cat > /etc/systemd/system/uvicorn.service <<EOL
 [Unit]
-Description=Unicorn HTTP Server
+Description=Uvicorn Server
 After=network.target
 
 [Service]
 WorkingDirectory=/root/KDVpn/backend
-ExecStart=/usr/local/bin/unicorn -c /root/KDVpn/backend/unicorn_config.rb -E production
+ExecStart=uvicorn app:router --host 0.0.0.0 --port 8080
 Restart=always
 User=root
 
@@ -108,8 +95,8 @@ User=root
 WantedBy=multi-user.target
 EOL
 
-systemctl enable unicorn
-systemctl start unicorn
+systemctl enable uvicorn
+systemctl start uvicorn
 
 # 11. نصب و پیکربندی Nginx
 echo "نصب و پیکربندی Nginx ..."
@@ -134,6 +121,7 @@ server {
 EOL
 
 ln -s /etc/nginx/sites-available/kurdan /etc/nginx/sites-enabled/
+rm /etc/nginx/sites-enabled/default
 systemctl reload nginx
 
 # 12. نصب و پیکربندی SSL (Certbot)
@@ -204,7 +192,7 @@ echo "تنظیم مجوزها ..."
 chmod -R 755 /root/KDVpn
 chown -R www-data:www-data /root/KDVpn
 
-# 18. فعال‌سازی سرویس‌ها
+# 18. فعال‌سازی و راه‌اندازی سرویس‌ها
 echo "فعال‌سازی و راه‌اندازی سرویس‌ها ..."
 systemctl enable xray
 systemctl enable sing-box
