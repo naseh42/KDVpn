@@ -1,11 +1,11 @@
 #!/bin/bash
 
 # مراحل نصب و پیکربندی XRay و Sing-box
-echo "شروع نصب XRay و Sing-box ..."
+echo "شروع نصب پیش‌نیازها ..."
 
 # نصب پیش‌نیازها
 apt update && apt upgrade -y
-apt install -y wget curl ufw mysql-server git tar unzip
+apt install -y wget curl ufw mysql-server git tar zip 
 
 # تنظیمات فایروال
 ufw allow OpenSSH
@@ -13,41 +13,60 @@ ufw allow 80,443/tcp
 ufw enable
 
 # دانلود و نصب XRay
-wget https://github.com/XTLS/Xray-core/releases/download/v1.5.0/Xray-linux-amd64-1.5.0.tar.gz
-tar -zxvf Xray-linux-amd64-1.5.0.tar.gz
-mv xray /usr/local/bin/
-chmod +x /usr/local/bin/xray
+wget -O xray.tar.gz https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
+mkdir -p /usr/local/xray
+tar -zxvf xray.tar.gz -C /usr/local/xray
+chmod +x /usr/local/xray/xray
 
 # دانلود و نصب Sing-box
-wget https://github.com/SagerNet/sing-box/releases/download/v1.0.0/sing-box-linux-amd64.tar.gz
-tar -zxvf sing-box-linux-amd64.tar.gz
-mv sing-box /usr/local/bin/
-chmod +x /usr/local/bin/sing-box
+wget -O sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/latest/download/sing-box-linux-amd64.tar.gz
+mkdir -p /usr/local/sing-box
+tar -zxvf sing-box.tar.gz -C /usr/local/sing-box
+chmod +x /usr/local/sing-box/sing-box
 
-# ایجاد سرویس‌ها برای XRay و Sing-box
-echo "[Unit]"
+# ایجاد دایرکتوری‌های موردنظر
+mkdir -p /KDVpn/backend/templates
+mkdir -p /KDVpn/backend/static/css
+
+# انتقال فایل‌های مشخص‌شده
+mv ap.py /KDVpn/backend/
+mv styles.css /KDVpn/backend/static/css/
+
+# انتقال فایل‌های HTML به مسیر templates
+mv dashboard.html /KDVpn/backend/templates/
+mv users.html /KDVpn/backend/templates/
+mv domains.html /KDVpn/backend/templates/
+mv settings.html /KDVpn/backend/templates/
+
+# ایجاد سرویس XRay
+cat <<EOF > /etc/systemd/system/xray.service
+[Unit]
 Description=XRay service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/xray run
+ExecStart=/usr/local/xray/xray run
 Restart=on-failure
 User=nobody
 
 [Install]
-WantedBy=multi-user.target" > /etc/systemd/system/xray.service
+WantedBy=multi-user.target
+EOF
 
-echo "[Unit]"
+# ایجاد سرویس Sing-box
+cat <<EOF > /etc/systemd/system/sing-box.service
+[Unit]
 Description=Sing-box service
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/sing-box run
+ExecStart=/usr/local/sing-box/sing-box run
 Restart=on-failure
 User=nobody
 
 [Install]
-WantedBy=multi-user.target" > /etc/systemd/system/sing-box.service
+WantedBy=multi-user.target
+EOF
 
 # فعال‌سازی و شروع سرویس‌ها
 systemctl enable xray
@@ -65,69 +84,5 @@ mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_pass
 mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
-# پیکربندی XRay و Sing-box
-mkdir -p /etc/xray
-mkdir -p /etc/sing-box
-
-# تنظیمات اولیه برای XRay و Sing-box
-echo "Setting up XRay and Sing-box configs ..."
-
-# اضافه کردن فایل کانفیگ XRay
-echo "{
-  'inbounds': [{
-    'port': 10086,
-    'protocol': 'vmess',
-    'settings': {
-      'clients': [{
-        'id': 'uuid-generated-here',
-        'alterId': 64
-      }]
-    }
-  },
-  {
-    'port': 10087,
-    'protocol': 'hysteria',
-    'settings': {
-      'clients': [{
-        'id': 'uuid-generated-here',
-        'alterId': 64
-      }]
-    }
-  }]
-}" > /etc/xray/config.json
-
-# اضافه کردن فایل کانفیگ Sing-box
-echo "{
-  'log': {
-    'level': 'info',
-    'output': 'stdout'
-  },
-  'outbounds': [{
-    'protocol': 'vmess',
-    'settings': {
-      'vnext': [{
-        'address': 'example.com',
-        'port': 443,
-        'users': [{
-          'id': 'uuid-generated-here',
-          'alterId': 64
-        }]
-      }]
-    }
-  },
-  {
-    'protocol': 'xtcp',
-    'settings': {
-      'vnext': [{
-        'address': 'example.com',
-        'port': 443,
-        'users': [{
-          'id': 'uuid-generated-here',
-          'alterId': 64
-        }]
-      }]
-    }
-  }]
-}" > /etc/sing-box/config.json
-
-echo "تمام شد!"
+# پایان نصب
+echo "نصب و پیکربندی با موفقیت انجام شد!"
