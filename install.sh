@@ -1,203 +1,107 @@
 #!/bin/bash
 
-# 1. تنظیمات اولیه
-KDVpn_dir="/root/KDVpn"
-xray_version="v1.5.0"
-singbox_version="v1.11.4"
+# تعریف رنگ‌ها برای پیام‌ها
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+NC='\033[0m'
 
-# 2. دریافت دامنه از کاربر (اختیاری)
-read -p "لطفاً دامنه خود را وارد کنید (اختیاری): " domain_name
-if [[ -z "$domain_name" ]]; then
-    echo "هیچ دامنه‌ای وارد نشد. سرور با آدرس IP کار خواهد کرد."
-    domain_name=""
-else
-    echo "دامنه تنظیم شد: $domain_name"
+echo -e "${GREEN}شروع نصب و پیکربندی...${NC}"
+
+# ۱. بررسی دسترسی
+if [ "$EUID" -ne 0 ]; then
+    echo -e "${RED}لطفاً اسکریپت را با دسترسی ریشه (sudo) اجرا کنید.${NC}"
+    exit
 fi
 
-# 3. بررسی نصب XRay
-echo "بررسی نصب XRay ..."
-if ! command -v xray &> /dev/null; then
-    echo "XRay نصب نشده است. دانلود و نصب در حال انجام ..."
-    wget "https://github.com/XTLS/Xray-core/releases/download/$xray_version/Xray-linux-64.zip" -P $KDVpn_dir
-    unzip "$KDVpn_dir/Xray-linux-64.zip" -d /usr/local/bin/
-    chmod +x /usr/local/bin/xray
-    echo "XRay با موفقیت نصب شد."
-else
-    echo "XRay قبلاً نصب شده است."
-fi
+# ۲. به‌روزرسانی سیستم
+echo -e "${GREEN}به‌روزرسانی مخازن و سیستم...${NC}"
+apt update && apt upgrade -y
 
-# 4. بررسی نصب Sing-box
-echo "بررسی نصب Sing-box ..."
-if ! command -v sing-box &> /dev/null; then
-    echo "Sing-box نصب نشده است. دانلود و نصب در حال انجام ..."
-    wget "https://github.com/SagerNet/sing-box/releases/download/$singbox_version/sing-box-linux-amd64-$singbox_version.tar.gz" -P $KDVpn_dir
-    tar -zxvf "$KDVpn_dir/sing-box-linux-amd64-$singbox_version.tar.gz" -C /usr/local/bin/
-    chmod +x /usr/local/bin/sing-box
-    echo "Sing-box با موفقیت نصب شد."
-else
-    echo "Sing-box قبلاً نصب شده است."
-fi
+# ۳. نصب ابزارهای مورد نیاز
+echo -e "${GREEN}نصب ابزارهای ضروری...${NC}"
+apt install -y python3 python3-pip git curl wget nginx mysql-server
 
-# 5. پیکربندی فایروال
-echo "پیکربندی فایروال ..."
-ufw allow OpenSSH
-ufw allow 80,443/tcp
-ufw enable
-
-# 6. نصب و پیکربندی MySQL
-echo "پیکربندی MySQL ..."
-mysql_root_password=$(openssl rand -base64 12)
-mysql -e "CREATE DATABASE kurdan;"
-mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_password}';"
-mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
+# ۴. نصب و تنظیم MySQL (در صورت نیاز)
+echo -e "${GREEN}نصب و تنظیم MySQL...${NC}"
+service mysql start
+mysql -e "CREATE DATABASE IF NOT EXISTS kdvpndb;"
+mysql -e "CREATE USER IF NOT EXISTS 'kdvpnuser'@'localhost' IDENTIFIED BY 'password';"
+mysql -e "GRANT ALL PRIVILEGES ON kdvpndb.* TO 'kdvpnuser'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
-# 7. نصب پایتون و محیط مجازی
-echo "نصب پایتون و ایجاد محیط مجازی..."
-apt install -y python3 python3-pip python3-venv
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install fastapi uvicorn sqlalchemy pymysql jinja2 python-decouple
+# ۵. نصب کتابخانه‌های پایتون
+echo -e "${GREEN}نصب کتابخانه‌های پایتون...${NC}"
+pip3 install -r requirements.txt
 
-# 8. ایجاد فایل .env
-echo "ایجاد فایل .env..."
-cat <<EOT > /root/KDVpn/backend/.env
-DB_USERNAME=kurdan_user
-DB_PASSWORD=${mysql_root_password}
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_NAME=kurdan
-EOT
+# ۶. دانلود و نصب Sing-box
+echo -e "${GREEN}دانلود و نصب Sing-box...${NC}"
+curl -L -o sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/latest/download/sing-box-linux-amd64.tar.gz
+tar -xzf sing-box.tar.gz -C /usr/local/bin/
+rm sing-box.tar.gz
 
-# 9. ایجاد جداول دیتابیس
-echo "ایجاد جداول دیتابیس..."
-python3 -c "
-from backend.database import Base, engine
-from backend import models
-Base.metadata.create_all(bind=engine)
-"
+# ۷. دانلود و نصب XRay
+echo -e "${GREEN}دانلود و نصب XRay...${NC}"
+curl -L -o xray.zip https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
+unzip xray.zip -d /usr/local/bin/
+rm xray.zip
 
-# 10. نصب و راه‌اندازی Uvicorn
-echo "راه‌اندازی سرور Uvicorn ..."
-cat > /etc/systemd/system/uvicorn.service <<EOL
+# ۸. تنظیم پوشه‌ها
+echo -e "${GREEN}ایجاد پوشه‌های پروژه...${NC}"
+mkdir -p /var/www/KDVpn/backend/templates
+mkdir -p /var/www/KDVpn/backend/static/css
+mkdir -p /var/www/KDVpn/backend/routers
+
+# ۹. انتقال فایل‌ها
+echo -e "${GREEN}انتقال فایل‌های پروژه...${NC}"
+mv app.py /var/www/KDVpn/backend/
+mv database.py /var/www/KDVpn/backend/
+mv models.py /var/www/KDVpn/backend/
+mv schemas.py /var/www/KDVpn/backend/
+mv routers/* /var/www/KDVpn/backend/routers/
+mv templates/* /var/www/KDVpn/backend/templates/
+mv static/css/* /var/www/KDVpn/backend/static/css/
+
+# ۱۰. تنظیم Nginx (در صورت نیاز)
+echo -e "${GREEN}تنظیم Nginx...${NC}"
+cat <<EOL > /etc/nginx/sites-available/KDVpn
+server {
+    listen 80;
+    server_name localhost;
+
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host \$host;
+        proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+    }
+
+    location /static/ {
+        alias /var/www/KDVpn/backend/static/;
+    }
+}
+EOL
+ln -s /etc/nginx/sites-available/KDVpn /etc/nginx/sites-enabled/
+nginx -t && systemctl restart nginx
+
+# ۱۱. راه‌اندازی اپلیکیشن
+echo -e "${GREEN}راه‌اندازی اپلیکیشن...${NC}"
+cat <<EOL > /etc/systemd/system/kdvpnd.service
 [Unit]
-Description=Uvicorn Server
+Description=KDVpn FastAPI Application
 After=network.target
 
 [Service]
-WorkingDirectory=/root/KDVpn/backend
-ExecStart=uvicorn app:router --host 0.0.0.0 --port 8080
-Restart=always
 User=root
+WorkingDirectory=/var/www/KDVpn/backend
+ExecStart=/usr/bin/python3 app.py
+Restart=always
 
 [Install]
 WantedBy=multi-user.target
 EOL
 
-systemctl enable uvicorn
-systemctl start uvicorn
+systemctl daemon-reload
+systemctl enable kdvpnd
+systemctl start kdvpnd
 
-# 11. نصب و پیکربندی Nginx
-echo "نصب و پیکربندی Nginx ..."
-apt install -y nginx
-
-cat > /etc/nginx/sites-available/kurdan <<EOL
-server {
-    listen 80;
-    server_name ${domain_name:-_};
-
-    location /static/ {
-        alias /root/KDVpn/backend/static/;
-    }
-
-    location / {
-        proxy_pass http://127.0.0.1:8080;
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-    }
-}
-EOL
-
-ln -s /etc/nginx/sites-available/kurdan /etc/nginx/sites-enabled/
-rm /etc/nginx/sites-enabled/default
-systemctl reload nginx
-
-# 12. نصب و پیکربندی SSL (Certbot)
-if [[ -n "$domain_name" ]]; then
-    echo "نصب و پیکربندی Certbot برای SSL ..."
-    apt install -y certbot python3-certbot-nginx
-    certbot --nginx -d $domain_name --non-interactive --agree-tos -m admin@$domain_name
-    systemctl reload nginx
-else
-    echo "هیچ دامنه‌ای تنظیم نشده است، بخش SSL رد شد."
-fi
-
-# 13. ایجاد پوشه‌ها
-echo "ایجاد پوشه‌های لازم ..."
-mkdir -p /usr/local/bin/xray
-mkdir -p /usr/local/bin/sing-box
-mkdir -p /etc/xray
-mkdir -p /etc/sing-box
-mkdir -p /root/KDVpn/templates
-mkdir -p /root/KDVpn/backend
-mkdir -p /root/KDVpn/static/css
-
-# 14. انتقال فایل‌ها
-echo "انتقال فایل‌های لازم ..."
-[ -f "$KDVpn_dir/dashboard.html" ] && mv "$KDVpn_dir/dashboard.html" /root/KDVpn/templates/
-[ -f "$KDVpn_dir/users.html" ] && mv "$KDVpn_dir/users.html" /root/KDVpn/templates/
-[ -f "$KDVpn_dir/domains.html" ] && mv "$KDVpn_dir/domains.html" /root/KDVpn/templates/
-[ -f "$KDVpn_dir/app.py" ] && mv "$KDVpn_dir/app.py" /root/KDVpn/backend/
-
-# 15. تولید UUID و پیکربندی XRay
-uuid=$(cat /proc/sys/kernel/random/uuid)
-echo "{
-  \"inbounds\": [{
-    \"port\": 10086,
-    \"protocol\": \"vmess\",
-    \"settings\": {
-      \"clients\": [{
-        \"id\": \"$uuid\",
-        \"alterId\": 64
-      }]
-    }
-  }]
-}" > /etc/xray/config.json
-
-# 16. پیکربندی Sing-box
-echo "{
-  \"log\": {
-    \"level\": \"info\",
-    \"output\": \"stdout\"
-  },
-  \"outbounds\": [{
-    \"protocol\": \"vmess\",
-    \"settings\": {
-      \"vnext\": [{
-        \"address\": \"example.com\",
-        \"port\": 443,
-        \"users\": [{
-          \"id\": \"$uuid\",
-          \"alterId\": 64
-        }]
-      }]
-    }
-  }]
-}" > /etc/sing-box/config.json
-
-# 17. تنظیم مجوزها
-echo "تنظیم مجوزها ..."
-chmod -R 755 /root/KDVpn
-chown -R www-data:www-data /root/KDVpn
-
-# 18. فعال‌سازی و راه‌اندازی سرویس‌ها
-echo "فعال‌سازی و راه‌اندازی سرویس‌ها ..."
-systemctl enable xray
-systemctl enable sing-box
-systemctl start xray
-systemctl start sing-box
-
-# پیام نهایی
-echo "✅ تمامی مراحل نصب و پیکربندی با موفقیت به پایان رسید!"
+echo -e "${GREEN}نصب و راه‌اندازی با موفقیت انجام شد!${NC}"
