@@ -1,0 +1,37 @@
+<!-- backend/templates/users.html -->
+<!DOCTYPE html>
+<html lang="{{ lang }}">
+<head>
+    <meta charset="UTF-8">
+    <title>مدیریت کاربران</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container mx-auto mt-10">
+        <h1 class="text-2xl font-bold mb-4">{{ "User Management" if lang == "en" else "مدیریت کاربران" }}</h1>
+        <table>
+            <thead>
+                <tr>
+                    <th>{{ "Name" if lang == "en" else "نام" }}</th>
+                    <th>{{ "UUID" if lang == "en" else "UUID" }}</th>
+                    <th>{{ "Expiry Date" if lang == "en" else "تاریخ انقضا" }}</th>
+                    <th>{{ "Actions" if lang == "en" else "عملیات" }}</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.uuid }}</td>
+                    <td>{{ user.expiry }}</td>
+                    <td>
+                        <button>{{ "Edit" if lang == "en" else "ویرایش" }}</button>
+                        <button>{{ "Delete" if lang == "en" else "حذف" }}</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
