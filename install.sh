@@ -53,39 +53,62 @@ mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
 # 7. نصب و پیکربندی Unicorn
-echo "نصب و راه‌اندازی Unicorn ..."
+echo "نصب و پیکربندی Unicorn ..."
 apt install -y ruby ruby-dev
 gem install unicorn
-echo "[Unit]
+
+cat > /root/KDVpn/backend/unicorn_config.rb <<EOL
+worker_processes 2
+working_directory "/root/KDVpn/backend"
+listen 8080
+timeout 30
+pid "/root/KDVpn/backend/unicorn.pid"
+stderr_path "/root/KDVpn/backend/unicorn.stderr.log"
+stdout_path "/root/KDVpn/backend/unicorn.stdout.log"
+EOL
+
+cat > /etc/systemd/system/unicorn.service <<EOL
+[Unit]
 Description=Unicorn HTTP Server
 After=network.target
 
 [Service]
-ExecStart=/usr/local/bin/unicorn -c /root/KDVpn/unicorn_config.rb -E production
+WorkingDirectory=/root/KDVpn/backend
+ExecStart=/usr/local/bin/unicorn -c /root/KDVpn/backend/unicorn_config.rb -E production
 Restart=always
-User=nobody
+User=root
 
 [Install]
-WantedBy=multi-user.target" > /etc/systemd/system/unicorn.service
+WantedBy=multi-user.target
+EOL
+
 systemctl enable unicorn
 systemctl start unicorn
 
 # 8. نصب و پیکربندی Nginx
-echo "نصب و راه‌اندازی Nginx ..."
+echo "نصب و پیکربندی Nginx ..."
 apt install -y nginx
-echo "server {
+
+cat > /etc/nginx/sites-available/kurdan <<EOL
+server {
     listen 80;
     server_name ${domain_name:-_};
+
+    location /static/ {
+        alias /root/KDVpn/backend/static/;
+    }
 
     location / {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host \$host;
         proxy_set_header X-Real-IP \$remote_addr;
+        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
     }
-}" > /etc/nginx/sites-available/kurdan
+}
+EOL
+
 ln -s /etc/nginx/sites-available/kurdan /etc/nginx/sites-enabled/
-systemctl enable nginx
-systemctl restart nginx
+systemctl reload nginx
 
 # 9. نصب و پیکربندی SSL (Certbot)
 if [[ -n "$domain_name" ]]; then
