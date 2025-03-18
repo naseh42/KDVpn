@@ -52,7 +52,33 @@ mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_pass
 mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
-# 7. نصب و پیکربندی Unicorn
+# 7. نصب پایتون و محیط مجازی
+echo "نصب پایتون و ایجاد محیط مجازی..."
+apt install -y python3 python3-pip python3-venv
+python3 -m venv venv
+source venv/bin/activate
+pip install --upgrade pip
+pip install fastapi uvicorn sqlalchemy pymysql jinja2 python-decouple
+
+# 8. ایجاد فایل .env
+echo "ایجاد فایل .env..."
+cat <<EOT > /root/KDVpn/backend/.env
+DB_USERNAME=kurdan_user
+DB_PASSWORD=${mysql_root_password}
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=kurdan
+EOT
+
+# 9. ایجاد جداول دیتابیس
+echo "ایجاد جداول دیتابیس..."
+python3 -c "
+from backend.database import Base, engine
+from backend import models
+Base.metadata.create_all(bind=engine)
+"
+
+# 10. نصب و پیکربندی Unicorn
 echo "نصب و پیکربندی Unicorn ..."
 apt install -y ruby ruby-dev
 gem install unicorn
@@ -85,7 +111,7 @@ EOL
 systemctl enable unicorn
 systemctl start unicorn
 
-# 8. نصب و پیکربندی Nginx
+# 11. نصب و پیکربندی Nginx
 echo "نصب و پیکربندی Nginx ..."
 apt install -y nginx
 
@@ -110,7 +136,7 @@ EOL
 ln -s /etc/nginx/sites-available/kurdan /etc/nginx/sites-enabled/
 systemctl reload nginx
 
-# 9. نصب و پیکربندی SSL (Certbot)
+# 12. نصب و پیکربندی SSL (Certbot)
 if [[ -n "$domain_name" ]]; then
     echo "نصب و پیکربندی Certbot برای SSL ..."
     apt install -y certbot python3-certbot-nginx
@@ -120,7 +146,7 @@ else
     echo "هیچ دامنه‌ای تنظیم نشده است، بخش SSL رد شد."
 fi
 
-# 10. ایجاد پوشه‌ها
+# 13. ایجاد پوشه‌ها
 echo "ایجاد پوشه‌های لازم ..."
 mkdir -p /usr/local/bin/xray
 mkdir -p /usr/local/bin/sing-box
@@ -130,14 +156,14 @@ mkdir -p /root/KDVpn/templates
 mkdir -p /root/KDVpn/backend
 mkdir -p /root/KDVpn/static/css
 
-# 11. انتقال فایل‌ها
+# 14. انتقال فایل‌ها
 echo "انتقال فایل‌های لازم ..."
 [ -f "$KDVpn_dir/dashboard.html" ] && mv "$KDVpn_dir/dashboard.html" /root/KDVpn/templates/
 [ -f "$KDVpn_dir/users.html" ] && mv "$KDVpn_dir/users.html" /root/KDVpn/templates/
 [ -f "$KDVpn_dir/domains.html" ] && mv "$KDVpn_dir/domains.html" /root/KDVpn/templates/
 [ -f "$KDVpn_dir/app.py" ] && mv "$KDVpn_dir/app.py" /root/KDVpn/backend/
 
-# 12. تولید UUID و پیکربندی XRay
+# 15. تولید UUID و پیکربندی XRay
 uuid=$(cat /proc/sys/kernel/random/uuid)
 echo "{
   \"inbounds\": [{
@@ -152,7 +178,7 @@ echo "{
   }]
 }" > /etc/xray/config.json
 
-# 13. پیکربندی Sing-box
+# 16. پیکربندی Sing-box
 echo "{
   \"log\": {
     \"level\": \"info\",
@@ -173,12 +199,12 @@ echo "{
   }]
 }" > /etc/sing-box/config.json
 
-# 14. تنظیم مجوزها
+# 17. تنظیم مجوزها
 echo "تنظیم مجوزها ..."
 chmod -R 755 /root/KDVpn
 chown -R www-data:www-data /root/KDVpn
 
-# 15. فعال‌سازی سرویس‌ها
+# 18. فعال‌سازی سرویس‌ها
 echo "فعال‌سازی و راه‌اندازی سرویس‌ها ..."
 systemctl enable xray
 systemctl enable sing-box
