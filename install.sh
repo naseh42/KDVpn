@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# تعریف رنگ‌ها برای نمایش پیام
+# تعریف رنگ‌ها برای پیام‌ها
 GREEN='\033[0;32m'
 RED='\033[0;31m'
 NC='\033[0m'
@@ -56,7 +56,7 @@ pip3 install -r requirements.txt
 
 # دانلود و نصب Sing-box
 echo -e "${GREEN}دانلود و نصب Sing-box...${NC}"
-curl -L -o sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/latest/download/sing-box-linux-amd64.tar.gz
+curl -L -o sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/latest/download/sing-box-linux-amd64-64.tar.gz
 tar -xzf sing-box.tar.gz -C /usr/local/bin/
 rm sing-box.tar.gz
 
@@ -67,14 +67,14 @@ unzip xray.zip -d /usr/local/bin/
 rm xray.zip
 
 # انتقال فایل‌های پروژه
-echo -e "${GREEN}انتقال فایل‌های پروژه...${NC}"
-mv app.py /var/www/KDVpn/backend/
-mv database.py /var/www/KDVpn/backend/
-mv models.py /var/www/KDVpn/backend/
-mv schemas.py /var/www/KDVpn/backend/
-mv routers/* /var/www/KDVpn/backend/routers/
-mv templates/* /var/www/KDVpn/backend/templates/
-mv static/css/* /var/www/KDVpn/backend/static/css/
+echo -e "${GREEN}انتقال فایل‌های پروژه از پوشه KDVpn...${NC}"
+mv KDVpn/app.py /var/www/KDVpn/backend/
+mv KDVpn/database.py /var/www/KDVpn/backend/
+mv KDVpn/models.py /var/www/KDVpn/backend/
+mv KDVpn/schemas.py /var/www/KDVpn/backend/
+mv KDVpn/routers/* /var/www/KDVpn/backend/routers/
+mv KDVpn/templates/* /var/www/KDVpn/backend/templates/
+mv KDVpn/static/css/* /var/www/KDVpn/backend/static/css/
 
 # تنظیمات Nginx
 echo -e "${GREEN}تنظیم Nginx...${NC}"
