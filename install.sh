@@ -1,88 +1,82 @@
 #!/bin/bash
 
-# مراحل نصب و پیکربندی XRay و Sing-box
-echo "شروع نصب پیش‌نیازها ..."
-
 # نصب پیش‌نیازها
 apt update && apt upgrade -y
-apt install -y wget curl ufw mysql-server git tar zip 
+apt install -y wget curl unzip tar ufw mysql-server git
 
 # تنظیمات فایروال
 ufw allow OpenSSH
 ufw allow 80,443/tcp
 ufw enable
 
-# دانلود و نصب XRay
-wget -O xray.tar.gz https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip
-mkdir -p /usr/local/xray
-tar -zxvf xray.tar.gz -C /usr/local/xray
-chmod +x /usr/local/xray/xray
+# مسیرهای اصلی
+XRAY_DIR="/usr/local/xray"
+SING_BOX_DIR="/usr/local/sing-box"
+
+# دانلود و نصب Xray
+echo "در حال دانلود Xray..."
+XRAY_URL="https://github.com/XTLS/Xray-core/releases/latest/download/Xray-linux-64.zip"
+wget -O xray_download $XRAY_URL
+
+# تشخیص فرمت و استخراج
+if file xray_download | grep -q "Zip archive data"; then
+    echo "فایل Xray به صورت ZIP است، در حال استخراج..."
+    unzip xray_download -d $XRAY_DIR/
+elif file xray_download | grep -q "gzip compressed data"; then
+    echo "فایل Xray به صورت TAR است، در حال استخراج..."
+    tar -xvzf xray_download -C $XRAY_DIR/
+else
+    echo "فرمت نامعتبر برای Xray! نصب متوقف شد."
+    exit 1
+fi
+
+chmod +x $XRAY_DIR/xray
 
 # دانلود و نصب Sing-box
-wget -O sing-box.tar.gz https://github.com/SagerNet/sing-box/releases/latest/download/sing-box-linux-amd64.tar.gz
-mkdir -p /usr/local/sing-box
-tar -zxvf sing-box.tar.gz -C /usr/local/sing-box
-chmod +x /usr/local/sing-box/sing-box
+echo "در حال دانلود Sing-box..."
+SING_BOX_URL="https://github.com/SagerNet/sing-box/releases/latest/download/sing-box-linux-amd64.tar.gz"
+wget -O sing-box.tar.gz $SING_BOX_URL
 
-# ایجاد دایرکتوری‌های موردنظر
-mkdir -p /KDVpn/backend/templates
-mkdir -p /KDVpn/backend/static/css
+if [ $? -eq 0 ]; then
+    echo "در حال استخراج Sing-box..."
+    mkdir -p $SING_BOX_DIR
+    tar -xvzf sing-box.tar.gz -C $SING_BOX_DIR/
+    chmod +x $SING_BOX_DIR/sing-box
+else
+    echo "خطا در دانلود Sing-box! لطفاً لینک را بررسی کنید."
+    exit 1
+fi
 
-# انتقال فایل‌های مشخص‌شده
-mv ap.py /KDVpn/backend/
-mv styles.css /KDVpn/backend/static/css/
+# ایجاد پوشه‌های موردنیاز
+echo "بررسی و ایجاد پوشه‌های مورد نیاز..."
+mkdir -p KDVpn/backend/templates
+mkdir -p KDVpn/backend/static/css
 
-# انتقال فایل‌های HTML به مسیر templates
-mv dashboard.html /KDVpn/backend/templates/
-mv users.html /KDVpn/backend/templates/
-mv domains.html /KDVpn/backend/templates/
-mv settings.html /KDVpn/backend/templates/
+# انتقال فایل‌ها به مسیرهای درست
+echo "انتقال فایل‌ها..."
+[ -f "app.py" ] && mv app.py KDVpn/backend/ || echo "فایل app.py یافت نشد!"
+[ -f "users.html" ] && mv users.html KDVpn/backend/templates/ || echo "فایل users.html یافت نشد!"
+[ -f "styles.css" ] && mv styles.css KDVpn/backend/static/css/ || echo "فایل styles.css یافت نشد!"
 
-# ایجاد سرویس XRay
-cat <<EOF > /etc/systemd/system/xray.service
+# پیکربندی یونیکورن
+echo "تنظیم فایل unicorn.service..."
+cat > /etc/systemd/system/unicorn.service <<EOF
 [Unit]
-Description=XRay service
+Description=Gunicorn instance to serve Kurdan
 After=network.target
 
 [Service]
-ExecStart=/usr/local/xray/xray run
-Restart=on-failure
-User=nobody
+User=root
+Group=root
+WorkingDirectory=/root/KDVpn/backend
+ExecStart=/usr/bin/python3 /root/KDVpn/backend/app.py
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
-# ایجاد سرویس Sing-box
-cat <<EOF > /etc/systemd/system/sing-box.service
-[Unit]
-Description=Sing-box service
-After=network.target
+systemctl daemon-reload
+systemctl enable unicorn
+systemctl start unicorn
 
-[Service]
-ExecStart=/usr/local/sing-box/sing-box run
-Restart=on-failure
-User=nobody
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# فعال‌سازی و شروع سرویس‌ها
-systemctl enable xray
-systemctl enable sing-box
-systemctl start xray
-systemctl start sing-box
-
-# پیکربندی پایگاه‌داده MySQL
-echo "شروع پیکربندی MySQL ..."
-
-# درخواست پسورد MySQL
-read -sp "Enter MySQL root password: " mysql_root_password
-mysql -e "CREATE DATABASE kurdan;"
-mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_password}';"
-mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
-mysql -e "FLUSH PRIVILEGES;"
-
-# پایان نصب
-echo "نصب و پیکربندی با موفقیت انجام شد!"
+echo "✅ نصب و انتقال فایل‌ها کامل شد!"
