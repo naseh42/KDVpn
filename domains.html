@@ -1,31 +1,33 @@
-<!-- backend/templates/domains.html -->
 <!DOCTYPE html>
 <html lang="{{ lang }}">
 <head>
     <meta charset="UTF-8">
-    <title>مدیریت دامنه‌ها</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Domains Management</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <div class="container mx-auto mt-10">
-        <h1 class="text-2xl font-bold mb-4">{{ "Domain Management" if lang == "en" else "مدیریت دامنه‌ها" }}</h1>
-        <form action="/add_domain" method="post">
-            <label for="domain">{{ "Domain Name" if lang == "en" else "نام دامنه" }}:</label>
-            <input type="text" id="domain" name="domain" required>
-            <button type="submit">{{ "Add Domain" if lang == "en" else "افزودن دامنه" }}</button>
-        </form>
-        <h2 class="mt-6">{{ "Existing Domains" if lang == "en" else "دامنه‌های موجود" }}</h2>
-        <ul>
-            {% for domain in domains %}
-                <li>
-                    {{ domain }}
-                    <form action="/delete_domain" method="post" style="display:inline;">
-                        <input type="hidden" name="domain" value="{{ domain }}">
-                        <button type="submit">{{ "Delete" if lang == "en" else "حذف" }}</button>
-                    </form>
-                </li>
-            {% endfor %}
-        </ul>
-    </div>
+    <h1>{{ 'Manage Domains' if lang == 'en' else 'مدیریت دامنه‌ها' }}</h1>
+
+    <h2>{{ 'Current Domains' if lang == 'en' else 'دامنه‌های موجود' }}</h2>
+    <ul>
+        {% for domain in domains %}
+            <li>{{ domain }}</li>
+        {% endfor %}
+    </ul>
+
+    <h3>{{ 'Add Domain' if lang == 'en' else 'افزودن دامنه' }}</h3>
+    <form method="post" action="/add-domain">
+        <input type="text" name="domain" placeholder="{{ 'Enter Domain' if lang == 'en' else 'نام دامنه را وارد کنید' }}">
+        <button type="submit">{{ 'Add' if lang == 'en' else 'افزودن' }}</button>
+    </form>
+
+    <h3>{{ 'Remove Domain' if lang == 'en' else 'حذف دامنه' }}</h3>
+    <form method="post" action="/remove-domain">
+        <input type="text" name="domain" placeholder="{{ 'Enter Domain' if lang == 'en' else 'نام دامنه را وارد کنید' }}">
+        <button type="submit">{{ 'Remove' if lang == 'en' else 'حذف' }}</button>
+    </form>
+
+    <a href="/dashboard">{{ 'Back to Dashboard' if lang == 'en' else 'بازگشت به داشبورد' }}</a>
 </body>
 </html>
