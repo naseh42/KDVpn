@@ -59,33 +59,31 @@ source env/bin/activate
 echo -e "${GREEN}نصب کتابخانه‌های پایتون...${NC}"
 pip install -r requirements.txt
 
-# انتقال فایل‌ها بر اساس جستجوی نام فایل‌ها
+# انتقال فایل‌ها بر اساس نوع به پوشه‌های مناسب
 echo -e "${GREEN}پیدا کردن و انتقال فایل‌های پروژه...${NC}"
 
-move_file() {
-    FILE_NAME=$1
+move_files_by_extension() {
+    FILE_EXTENSION=$1
     DEST_DIR=$2
 
     # مطمئن شوید پوشه مقصد وجود دارد
     mkdir -p "$DEST_DIR"
 
-    FILE_PATH=$(find . -type f -name "$FILE_NAME" 2>/dev/null | head -n 1)
-    
-    if [ -n "$FILE_PATH" ]; then
-        mv "$FILE_PATH" "$DEST_DIR"
-        echo -e "${GREEN}$FILE_NAME انتقال یافت به $DEST_DIR${NC}"
+    # پیدا کردن و انتقال فایل‌ها
+    FILE_PATHS=$(find . -type f -name "*.$FILE_EXTENSION" 2>/dev/null)
+    if [ -n "$FILE_PATHS" ]; then
+        for FILE in $FILE_PATHS; do
+            mv "$FILE" "$DEST_DIR"
+            echo -e "${GREEN}$FILE انتقال یافت به $DEST_DIR${NC}"
+        done
     else
-        echo -e "${RED}$FILE_NAME یافت نشد.${NC}"
+        echo -e "${RED}هیچ فایل .$FILE_EXTENSION یافت نشد.${NC}"
     fi
 }
 
-move_file "app.py" "/var/www/KDVpn/backend/"
-move_file "database.py" "/var/www/KDVpn/backend/"
-move_file "models.py" "/var/www/KDVpn/backend/"
-move_file "schemas.py" "/var/www/KDVpn/backend/"
-move_file "routers" "/var/www/KDVpn/backend/routers/"
-move_file "templates" "/var/www/KDVpn/backend/templates/"
-move_file "css" "/var/www/KDVpn/backend/static/css/"
+move_files_by_extension "py" "/var/www/KDVpn/backend/routers/" # فایل‌های پایتون مربوط به روترها
+move_files_by_extension "html" "/var/www/KDVpn/backend/templates/" # فایل‌های HTML مربوط به قالب‌ها
+move_files_by_extension "css" "/var/www/KDVpn/backend/static/css/" # فایل‌های CSS مربوط به استایل‌دهی
 
 # تنظیم Nginx
 echo -e "${GREEN}تنظیم Nginx...${NC}"
