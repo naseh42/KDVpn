@@ -1,14 +1,16 @@
 <!DOCTYPE html>
-<html lang="{{ lang }}">
+<html lang="fa">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>داشبورد</title>
+    <title>پنل مدیریت Kurdan</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <h1>داشبورد</h1>
-    <p>خوش آمدید، {{ username }}</p>
-    <p>حجم مصرفی باقی‌مانده: {{ traffic }} GB</p>
-    <p>تاریخ انقضا: {{ expiry_date }}</p>
+    <div class="container">
+        <h1>داشبورد</h1>
+        <p>نام کاربری: {{ username }}</p>
+        <p>حجم مصرفی باقی‌مانده: {{ traffic }} GB</p>
+    </div>
 </body>
 </html>
