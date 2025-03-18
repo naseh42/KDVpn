@@ -1,10 +1,11 @@
-# backend/app.py
 from fastapi import FastAPI, Request
-from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
+# تعریف FastAPI
 app = FastAPI()
 
+# تعریف مسیرهای قالب‌ها
 templates = Jinja2Templates(directory="backend/templates")
 
 # صفحه داشبورد
@@ -32,9 +33,9 @@ async def domains(request: Request, lang: str = "fa"):
 # صفحه تنظیمات
 @app.get("/settings", response_class=HTMLResponse)
 async def settings(request: Request, lang: str = "fa"):
-    return templates.TemplateResponse("settings.html", {"request": request, "lang": lang})
-
-# صفحه مشخصات سرور
-@app.get("/servers", response_class=HTMLResponse)
-async def servers(request: Request, lang: str = "fa"):
-    return templates.TemplateResponse("servers.html", {"request": request, "lang": lang})
+    # در اینجا می‌توانید تنظیمات لازم را برگردانید
+    settings_data = {
+        "setting1": "value1",
+        "setting2": "value2",
+    }
+    return templates.TemplateResponse("settings.html", {"request": request, "lang": lang, "settings": settings_data})
