@@ -1,24 +1,33 @@
-<table>
-    <thead>
-        <tr>
-            <th>نام کاربر</th>
-            <th>UUID</th>
-            <th>حجم مصرفی</th>
-            <th>مدت زمان استفاده (روز)</th>
-            <th>تاریخ انقضا</th>
-            <th>اتصال همزمان</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for user in users %}
-        <tr>
-            <td>{{ user.username }}</td>
-            <td>{{ user.uuid }}</td>
-            <td>{{ user.traffic_limit }} GB</td>
-            <td>{{ user.usage_duration }} روز</td>
-            <td>{{ user.expiry_date.strftime('%Y-%m-%d') }}</td>
-            <td>{{ user.simultaneous_connections }}</td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<!DOCTYPE html>
+<html lang="fa">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مدیریت کاربران</title>
+    <link rel="stylesheet" href="/static/css/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>مدیریت کاربران</h1>
+        <table>
+            <tr>
+                <th>نام</th>
+                <th>UUID</th>
+                <th>مدت استفاده</th>
+                <th>عملیات</th>
+            </tr>
+            {% for user in users %}
+                <tr>
+                    <td>{{ user.name }}</td>
+                    <td>{{ user.uuid }}</td>
+                    <td>{{ user.expiry }} روز</td>
+                    <td>
+                        <a href="/edit_user/{{ user.uuid }}">ویرایش</a>
+                        <a href="/delete_user/{{ user.uuid }}">حذف</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+</body>
+</html>
