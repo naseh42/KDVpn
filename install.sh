@@ -5,7 +5,7 @@ echo "شروع نصب XRay و Sing-box ..."
 
 # نصب پیش‌نیازها
 apt update && apt upgrade -y
-apt install -y wget curl ufw mysql-server git nginx python3-pip python3-venv
+apt install -y wget curl ufw mysql-server git nginx python3-pip python3-venv certbot python3-certbot-nginx
 
 # تنظیمات فایروال
 ufw allow OpenSSH
@@ -65,6 +65,28 @@ mysql -e "CREATE USER 'kurdan_user'@'localhost' IDENTIFIED BY '${mysql_root_pass
 mysql -e "GRANT ALL PRIVILEGES ON kurdan.* TO 'kurdan_user'@'localhost';"
 mysql -e "FLUSH PRIVILEGES;"
 
+# ایجاد فایل SQL برای جداول دیتابیس
+cat <<EOF > /root/kurdan-panel/init.sql
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(50) UNIQUE NOT NULL,
+    uuid VARCHAR(36) UNIQUE NOT NULL,
+    expire_date DATETIME NOT NULL,
+    traffic_limit BIGINT NOT NULL,
+    used_traffic BIGINT DEFAULT 0
+);
+
+CREATE TABLE servers (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    ip VARCHAR(50) NOT NULL,
+    status BOOLEAN DEFAULT TRUE
+);
+EOF
+
+# اجرای اسکریپت SQL
+mysql -u kurdan_user -p${mysql_root_password} kurdan < /root/kurdan-panel/init.sql
+
 # پیکربندی XRay و Sing-box
 mkdir -p /etc/xray
 mkdir -p /etc/sing-box
@@ -80,20 +102,9 @@ echo "{
         'alterId': 64
       }]
     }
-  },
-  {
-    'port': 10087,
-    'protocol': 'hysteria',
-    'settings': {
-      'clients': [{
-        'id': 'uuid-generated-here',
-        'alterId': 64
-      }]
-    }
   }]
 }" > /etc/xray/config.json
 
-# اضافه کردن فایل کانفیگ Sing-box
 echo "{
   'log': {
     'level': 'info',
@@ -101,19 +112,6 @@ echo "{
   },
   'outbounds': [{
     'protocol': 'vmess',
-    'settings': {
-      'vnext': [{
-        'address': 'example.com',
-        'port': 443,
-        'users': [{
-          'id': 'uuid-generated-here',
-          'alterId': 64
-        }]
-      }]
-    }
-  },
-  {
-    'protocol': 'xtcp',
     'settings': {
       'vnext': [{
         'address': 'example.com',
@@ -132,6 +130,43 @@ echo "راه‌اندازی سرویس‌های XRay و Sing-box ..."
 systemctl daemon-reload
 systemctl restart xray
 systemctl restart sing-box
+
+# نصب و راه‌اندازی FastAPI برای پنل Kurdan
+echo "نصب و پیکربندی FastAPI ..."
+mkdir -p /root/kurdan-panel
+cd /root/kurdan-panel
+
+python3 -m venv venv
+source venv/bin/activate
+pip install fastapi uvicorn mysql-connector-python
+
+# ایجاد اسکریپت اجرای FastAPI
+cat <<EOF > /root/kurdan-panel/run.sh
+#!/bin/bash
+cd /root/kurdan-panel
+source venv/bin/activate
+uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+EOF
+
+chmod +x /root/kurdan-panel/run.sh
+
+# ایجاد سرویس `systemd` برای اجرای FastAPI
+echo "[Unit]
+Description=Kurdan Panel Service
+After=network.target
+
+[Service]
+User=root
+WorkingDirectory=/root/kurdan-panel
+ExecStart=/root/kurdan-panel/venv/bin/uvicorn main:app --host 0.0.0.0 --port 8000
+Restart=always
+
+[Install]
+WantedBy=multi-user.target" > /etc/systemd/system/kurdan.service
+
+# فعال‌سازی و شروع پنل Kurdan
+systemctl enable kurdan
+systemctl start kurdan
 
 # نصب و پیکربندی Nginx برای پنل Kurdan
 echo "نصب و پیکربندی Nginx ..."
@@ -155,6 +190,15 @@ EOF
 ln -s /etc/nginx/sites-available/kurdan /etc/nginx/sites-enabled/
 systemctl restart nginx
 
+# تنظیم SSL برای Nginx (اختیاری)
+read -p "آیا می‌خواهید SSL برای دامنه تنظیم کنید؟ (y/n): " enable_ssl
+if [[ "\$enable_ssl" == "y" ]]; then
+    read -p "دامنه خود را وارد کنید: " domain_name
+    certbot --nginx -d \$domain_name
+    systemctl restart nginx
+    echo "SSL با موفقیت نصب شد!"
+fi
+
 # پایان نصب
-echo "نصب و پیکربندی با موفقیت انجام شد."
-echo "لطفاً به پنل مدیریت Kurdan با استفاده از آدرس http://<server_ip> مراجعه کنید."
+echo "✅ نصب و پیکربندی با موفقیت انجام شد."
+echo "🔗 لطفاً به پنل مدیریت Kurdan با استفاده از آدرس http://<server_ip> مراجعه کنید."
