@@ -7,14 +7,20 @@
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>مدیریت دامنه‌ها</h1>
+    <nav>
         <ul>
-            {% for domain in domains %}
-                <li>{{ domain }} <a href="/delete_domain/{{ domain }}">حذف</a></li>
-            {% endfor %}
+            <li><a href="/">داشبورد</a></li>
+            <li>
+                <a href="#">مدیریت</a>
+                <ul>
+                    <li><a href="/users">مدیریت کاربران</a></li>
+                    <li><a href="/domains">مدیریت دامنه‌ها</a></li>
+                    <li><a href="/settings">تنظیمات</a></li>
+                </ul>
+            </li>
         </ul>
-        <a href="/add_domain">اضافه کردن دامنه</a>
-    </div>
+    </nav>
+    <h1>مدیریت دامنه‌ها</h1>
+    <!-- محتوای اصلی مدیریت دامنه‌ها -->
 </body>
 </html>
