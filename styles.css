@@ -1,215 +1,118 @@
-/* تنظیمات اولیه صفحه */
-* {
+/* استایل کلی بدن صفحه */
+body {
+    direction: rtl; /* برای راست‌چین کردن متن */
+    text-align: right; /* ترازبندی متن */
+    font-family: 'Tahoma', 'Arial', sans-serif; /* انتخاب فونت فارسی */
     margin: 0;
     padding: 0;
-    box-sizing: border-box;
+    background-color: #f8f9fa; /* رنگ پس‌زمینه ملایم */
 }
 
-body {
-    font-family: 'Roboto', sans-serif;
-    background-color: #f4f7fa;
-    color: #333;
-    line-height: 1.6;
-    padding-top: 20px;
+/* استایل برای ناوبری */
+nav {
+    background-color: #343a40; /* رنگ پس‌زمینه منو */
+    color: white; /* رنگ متن */
+    padding: 10px;
 }
 
-/* هدر پنل */
-.header {
-    text-align: center;
-    background-color: #2c3e50;
-    padding: 20px;
+nav ul {
+    list-style-type: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: flex-end; /* منوی کشویی به راست */
+}
+
+nav ul li {
+    position: relative;
+    margin-left: 15px;
+}
+
+nav ul li a {
+    text-decoration: none; /* حذف خط زیر متن */
     color: white;
-    font-size: 24px;
-    border-radius: 8px;
+    padding: 10px;
+    transition: background-color 0.3s ease;
 }
 
-h1, h2, h3 {
-    color: #34495e;
-    font-weight: 600;
+nav ul li a:hover {
+    background-color: #495057; /* تغییر رنگ هنگام هاور */
+    border-radius: 5px;
 }
 
-/* لینک‌ها */
-a {
-    color: #3498db;
-    text-decoration: none;
+nav ul li ul {
+    position: absolute;
+    top: 100%;
+    right: 0; /* راست‌چین کردن زیرمنو */
+    display: none;
+    background-color: #495057;
+    padding: 10px;
+    border-radius: 5px;
 }
 
-a:hover {
-    text-decoration: underline;
+nav ul li ul li {
+    margin: 5px 0;
 }
 
-/* استایل دکمه‌ها */
+nav ul li ul li a {
+    padding: 5px 10px;
+    display: block;
+}
+
+nav ul li:hover ul {
+    display: block;
+}
+
+/* استایل هدر اصلی صفحه */
+h1 {
+    color: #343a40;
+    font-size: 2em;
+    margin-top: 20px;
+    text-align: right; /* ترازبندی راست */
+}
+
+/* استایل برای محتوای اصلی */
+main {
+    padding: 20px;
+}
+
+/* استایل برای دکمه‌ها */
 button {
-    background-color: #3498db;
+    background-color: #007bff; /* رنگ آبی برای دکمه‌ها */
     color: white;
     border: none;
-    padding: 12px 25px;
-    border-radius: 6px;
+    padding: 10px 15px;
+    border-radius: 5px;
     cursor: pointer;
-    font-size: 16px;
     transition: background-color 0.3s ease;
 }
 
 button:hover {
-    background-color: #2980b9;
+    background-color: #0056b3; /* تغییر رنگ هنگام هاور */
 }
 
-/* فرم‌ها */
-input[type="text"],
-input[type="password"],
-input[type="email"],
-textarea,
-select {
-    padding: 12px 15px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    width: 100%;
-    font-size: 16px;
-    margin-bottom: 15px;
-    background-color: #fff;
-    transition: border-color 0.3s ease;
-}
-
-input[type="text"]:focus,
-input[type="password"]:focus,
-input[type="email"]:focus,
-textarea:focus,
-select:focus {
-    border-color: #3498db;
-}
-
-/* جداول */
+/* استایل جداول */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 20px 0;
+    margin-top: 20px;
+    text-align: right; /* ترازبندی راست */
 }
 
-th, td {
-    padding: 12px 15px;
-    text-align: left;
+table th, table td {
+    padding: 10px;
     border: 1px solid #ddd;
 }
 
-th {
-    background-color: #f4f4f4;
-    font-weight: 600;
-    color: #34495e;
-}
-
-tr:nth-child(even) {
-    background-color: #f9f9f9;
-}
-
-tr:hover {
-    background-color: #f1f1f1;
-}
-
-/* بخش‌های عمومی */
-section {
-    padding: 20px;
-    background-color: #fff;
-    border-radius: 6px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-    margin-bottom: 30px;
-}
-
-section h2 {
-    margin-bottom: 20px;
-}
-
-ul {
-    list-style: none;
-    padding-left: 0;
-}
-
-li {
-    margin: 10px 0;
-}
-
-/* استایل نوار کناری (Sidebar) */
-.sidebar {
-    background-color: #2c3e50;
+table th {
+    background-color: #343a40;
     color: white;
-    height: 100%;
-    padding: 20px;
-    width: 250px;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: 1000;
-    transition: width 0.3s ease;
-    border-radius: 6px;
 }
 
-.sidebar a {
-    color: white;
-    text-decoration: none;
-    display: block;
-    padding: 15px;
-    font-size: 16px;
-    border-radius: 6px;
-    margin: 5px 0;
+table tr:nth-child(even) {
+    background-color: #f2f2f2;
 }
 
-.sidebar a:hover {
-    background-color: #3498db;
-}
-
-/* تنظیمات دکمه‌ها برای تغییر زبان */
-.language-selector {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 20px;
-}
-
-.language-selector select {
-    padding: 8px 15px;
-    border-radius: 6px;
-    border: 1px solid #ccc;
-    font-size: 16px;
-    background-color: #fff;
-    cursor: pointer;
-}
-
-.language-selector select:focus {
-    border-color: #3498db;
-}
-
-/* اضافه کردن انیمیشن‌های ورود */
-.fade-in {
-    animation: fadeIn 0.5s ease-in;
-}
-
-@keyframes fadeIn {
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-}
-
-/* استایل مربوط به صفحات موبایل (Responsive Design) */
-@media screen and (max-width: 768px) {
-    .sidebar {
-        width: 200px;
-    }
-
-    .header {
-        font-size: 20px;
-    }
-
-    button {
-        font-size: 14px;
-        padding: 10px 20px;
-    }
-
-    input[type="text"], 
-    input[type="password"], 
-    input[type="email"], 
-    textarea, 
-    select {
-        font-size: 14px;
-    }
+table tr:hover {
+    background-color: #e9ecef;
 }
