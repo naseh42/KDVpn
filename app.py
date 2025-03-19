@@ -1,6 +1,6 @@
-from fastapi import APIRouter, Depends
+from fastapi import FastAPI, APIRouter, Depends
 from sqlalchemy.orm import Session
-from . import models, database, schemas
+from routers import models, database, schemas
 
 router = APIRouter()
 
@@ -34,3 +34,9 @@ def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(da
         db.refresh(db_user)
         return db_user
     return {"message": "User not found"}
+
+# ایجاد شیء FastAPI
+app = FastAPI()
+
+# اضافه کردن روت‌های تعریف‌شده
+app.include_router(router)
