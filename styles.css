@@ -8,122 +8,83 @@ body {
     background: linear-gradient(135deg, #e0f7fa, #e1bee7); /* گرادینت ملایم */
 }
 
-/* هدر با نام صفحه */
+/* هدر برای نام صفحه و لینک‌ها */
 header {
     background-color: #24292e;
     color: white;
-    padding: 15px;
-    text-align: center;
-    font-size: 1.8em;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 15px 30px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+/* نام صفحه در هدر */
+header .page-name {
+    font-size: 1.5em;
     font-weight: bold;
+    color: #64b5f6; /* آبی روشن */
+    margin-right: 20px;
 }
 
-header span {
-    color: #64b5f6; /* آبی روشن برای نام صفحه */
+/* منوی لینک‌ها */
+header .links {
+    display: flex;
+    align-items: center;
 }
 
-/* منوی کشویی سمت چپ */
-#side-menu {
-    position: fixed;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 50px;
-    background-color: #333d47;
-    transition: width 0.3s ease;
-    overflow: hidden;
+header .links a {
+    text-decoration: none;
+    color: white;
+    font-size: 1em;
+    margin-left: 20px;
+    display: flex;
+    align-items: center;
+    transition: color 0.3s ease;
 }
 
-#side-menu:hover {
-    width: 200px; /* باز شدن منو */
+header .links a:hover {
+    color: #64b5f6; /* تغییر رنگ لینک هنگام هاور */
 }
 
-#side-menu ul {
-    list-style: none;
-    margin: 0;
-    padding: 0;
+/* آیکون‌های لینک‌ها */
+header .links a i {
+    margin-left: 10px; /* فاصله آیکون از متن */
+    font-size: 1.2em;
+}
+
+/* تنظیمات برای زبان فارسی */
+body[lang="fa"] {
+    direction: rtl;
+    text-align: right;
+}
+
+body[lang="fa"] header {
+    justify-content: flex-end; /* عناصر از راست چیده شوند */
+}
+
+body[lang="fa"] header .page-name {
+    margin-right: 20px;
+}
+
+body[lang="fa"] header .links a {
+    margin-left: 20px;
+}
+
+/* تنظیمات برای زبان انگلیسی */
+body[lang="en"] {
+    direction: ltr;
     text-align: left;
 }
 
-#side-menu ul li {
-    margin: 20px 0;
-    padding: 10px;
+body[lang="en"] header {
+    justify-content: flex-start; /* عناصر از چپ چیده شوند */
 }
 
-#side-menu ul li a {
-    text-decoration: none;
-    color: white;
-    font-size: 1.2em;
-    display: block;
-    transition: all 0.3s ease;
+body[lang="en"] header .page-name {
+    margin-left: 20px;
 }
 
-#side-menu ul li a:hover {
-    background-color: #0366d6;
-    border-radius: 5px;
-}
-
-#side-menu .toggle-icon {
-    position: absolute;
-    top: 20px;
-    right: 10px;
-    font-size: 1.5em;
-    color: white;
-    cursor: pointer;
-}
-
-/* دکمه‌ها */
-button {
-    background-color: #ff7f50; /* رنگ نارنجی جذاب */
-    color: white;
-    border: none;
-    padding: 10px 20px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    transition: all 0.3s ease;
-}
-
-button:hover {
-    background-color: #e06b3c;
-    transform: scale(1.1); /* افکت بزرگ شدن */
-}
-
-/* جداول */
-table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 20px;
-    background-color: white;
-    border-radius: 5px;
-    overflow: hidden;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-table th, table td {
-    padding: 15px;
-    text-align: right;
-    border: 1px solid #ddd;
-}
-
-table th {
-    background-color: #0366d6;
-    color: white;
-}
-
-table tr:nth-child(even) {
-    background-color: #f2f4f8;
-}
-
-table tr:hover {
-    background-color: #eaf5ff;
-}
-
-/* استایل جعبه‌های کارت */
-.card {
-    background-color: white;
-    border-radius: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    padding: 20px;
-    margin: 20px 0;
+body[lang="en"] header .links a {
+    margin-right: 20px;
 }
