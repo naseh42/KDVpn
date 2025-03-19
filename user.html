@@ -7,27 +7,20 @@
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>مدیریت کاربران</h1>
-        <table>
-            <tr>
-                <th>نام</th>
-                <th>UUID</th>
-                <th>مدت استفاده</th>
-                <th>عملیات</th>
-            </tr>
-            {% for user in users %}
-                <tr>
-                    <td>{{ user.name }}</td>
-                    <td>{{ user.uuid }}</td>
-                    <td>{{ user.expiry }} روز</td>
-                    <td>
-                        <a href="/edit_user/{{ user.uuid }}">ویرایش</a>
-                        <a href="/delete_user/{{ user.uuid }}">حذف</a>
-                    </td>
-                </tr>
-            {% endfor %}
-        </table>
-    </div>
+    <nav>
+        <ul>
+            <li><a href="/">داشبورد</a></li>
+            <li>
+                <a href="#">مدیریت</a>
+                <ul>
+                    <li><a href="/users">مدیریت کاربران</a></li>
+                    <li><a href="/domains">مدیریت دامنه‌ها</a></li>
+                    <li><a href="/settings">تنظیمات</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <h1>مدیریت کاربران</h1>
+    <!-- محتوای اصلی مدیریت کاربران -->
 </body>
 </html>
