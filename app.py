@@ -1,4 +1,5 @@
 from fastapi import FastAPI, APIRouter, Depends
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
 from backend.models import User
 from backend.database import get_db
@@ -49,4 +50,5 @@ def read_root():
     }
 
 # اضافه کردن روت‌های تعریف‌شده
+app.mount("/static", StaticFiles(directory="backend/static"), name="static")
 app.include_router(router)
