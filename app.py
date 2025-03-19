@@ -2,6 +2,10 @@ from fastapi import FastAPI, APIRouter, Depends
 from sqlalchemy.orm import Session
 from routers import models, database, schemas
 
+# ایجاد شیء FastAPI
+app = FastAPI()
+
+# ایجاد روتر
 router = APIRouter()
 
 # اضافه کردن کاربر جدید
@@ -35,8 +39,12 @@ def update_user(user_id: int, user: schemas.UserCreate, db: Session = Depends(da
         return db_user
     return {"message": "User not found"}
 
-# ایجاد شیء FastAPI
-app = FastAPI()
+# تعریف مسیر پیش‌فرض برای ریشه
+@app.get("/")
+def read_root():
+    return {
+        "message": "Welcome to KD VPN Backend"
+    }
 
 # اضافه کردن روت‌های تعریف‌شده
 app.include_router(router)
