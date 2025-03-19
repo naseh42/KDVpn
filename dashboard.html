@@ -3,14 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>پنل مدیریت Kurdan</title>
+    <title>داشبورد</title>
     <link rel="stylesheet" href="/static/css/styles.css">
+    <style>
+        /* استایل منوی کشویی */
+        nav {
+            background-color: #343a40;
+            color: white;
+            padding: 10px;
+        }
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            display: flex;
+        }
+        nav ul li {
+            position: relative;
+            margin: 0 15px;
+        }
+        nav ul li a {
+            text-decoration: none;
+            color: white;
+            padding: 10px;
+        }
+        nav ul li a:hover {
+            background-color: #495057;
+            border-radius: 5px;
+        }
+        nav ul li ul {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            display: none;
+            background-color: #495057;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        nav ul li ul li {
+            margin: 5px 0;
+        }
+        nav ul li ul li a {
+            padding: 5px 10px;
+            display: block;
+        }
+        nav ul li:hover ul {
+            display: block;
+        }
+    </style>
 </head>
 <body>
-    <div class="container">
-        <h1>داشبورد</h1>
-        <p>نام کاربری: {{ username }}</p>
-        <p>حجم مصرفی باقی‌مانده: {{ traffic }} GB</p>
-    </div>
+    <nav>
+        <ul>
+            <li><a href="/">داشبورد</a></li>
+            <li>
+                <a href="#">مدیریت</a>
+                <ul>
+                    <li><a href="/users">مدیریت کاربران</a></li>
+                    <li><a href="/domains">مدیریت دامنه‌ها</a></li>
+                    <li><a href="/settings">تنظیمات</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <h1>داشبورد</h1>
+    <!-- محتوای اصلی داشبورد -->
 </body>
 </html>
