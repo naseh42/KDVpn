@@ -1,77 +1,75 @@
-/* استایل کلی بدن صفحه */
+/* پس‌زمینه با گرادینت */
 body {
     direction: rtl;
     text-align: right;
-    font-family: 'IRANSans', 'Tahoma', Arial, sans-serif; /* فونت مدرن و خوانا */
+    font-family: 'IRANSans', 'Tahoma', Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f2f4f8; /* پس‌زمینه نرم و ملایم */
+    background: linear-gradient(135deg, #e0f7fa, #e1bee7); /* گرادینت ملایم */
 }
 
-/* استایل برای منو */
-nav {
+/* هدر با نام صفحه */
+header {
     background-color: #24292e;
     color: white;
-    padding: 15px 20px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* سایه زیر منو */
+    padding: 15px;
+    text-align: center;
+    font-size: 1.8em;
+    font-weight: bold;
 }
 
-nav ul {
+header span {
+    color: #64b5f6; /* آبی روشن برای نام صفحه */
+}
+
+/* منوی کشویی سمت چپ */
+#side-menu {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 50px;
+    background-color: #333d47;
+    transition: width 0.3s ease;
+    overflow: hidden;
+}
+
+#side-menu:hover {
+    width: 200px; /* باز شدن منو */
+}
+
+#side-menu ul {
     list-style: none;
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: flex-end;
+    text-align: left;
 }
 
-nav ul li {
-    position: relative;
-    margin-left: 20px;
+#side-menu ul li {
+    margin: 20px 0;
+    padding: 10px;
 }
 
-nav ul li a {
+#side-menu ul li a {
     text-decoration: none;
     color: white;
-    padding: 10px 15px;
-    border-radius: 5px;
+    font-size: 1.2em;
+    display: block;
     transition: all 0.3s ease;
 }
 
-nav ul li a:hover {
+#side-menu ul li a:hover {
     background-color: #0366d6;
-}
-
-nav ul li ul {
-    display: none;
-    position: absolute;
-    top: 100%;
-    right: 0;
-    background-color: #333d47;
     border-radius: 5px;
-    padding: 10px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-nav ul li:hover ul {
-    display: block;
-}
-
-nav ul li ul li a {
-    display: block;
-    padding: 5px 10px;
-    border-radius: 3px;
-}
-
-nav ul li ul li a:hover {
-    background-color: #0366d6;
-}
-
-/* تیتر صفحات */
-h1 {
-    color: #24292e;
-    font-size: 2.5em;
-    margin-top: 20px;
-    text-align: right;
+#side-menu .toggle-icon {
+    position: absolute;
+    top: 20px;
+    right: 10px;
+    font-size: 1.5em;
+    color: white;
+    cursor: pointer;
 }
 
 /* دکمه‌ها */
