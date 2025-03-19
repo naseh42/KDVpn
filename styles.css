@@ -1,53 +1,59 @@
 /* استایل کلی بدن صفحه */
 body {
-    direction: rtl; /* برای راست‌چین کردن متن */
-    text-align: right; /* ترازبندی متن */
-    font-family: 'Tahoma', 'Arial', sans-serif; /* انتخاب فونت فارسی */
+    direction: rtl;
+    text-align: right;
+    font-family: 'IranSans', 'Tahoma', Arial, sans-serif;
     margin: 0;
     padding: 0;
-    background-color: #f8f9fa; /* رنگ پس‌زمینه ملایم */
+    background-color: #f4f4f9; /* پس‌زمینه ملایم */
 }
 
-/* استایل برای ناوبری */
+/* استایل منو */
 nav {
-    background-color: #343a40; /* رنگ پس‌زمینه منو */
-    color: white; /* رنگ متن */
-    padding: 10px;
+    background-color: #24292e; /* رنگ جذاب برای منو */
+    color: white;
+    padding: 15px 20px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* سایه زیر منو */
 }
 
 nav ul {
-    list-style-type: none;
+    list-style: none;
+    display: flex;
+    justify-content: flex-end;
     margin: 0;
     padding: 0;
-    display: flex;
-    justify-content: flex-end; /* منوی کشویی به راست */
 }
 
 nav ul li {
     position: relative;
-    margin-left: 15px;
+    margin-left: 20px;
 }
 
 nav ul li a {
-    text-decoration: none; /* حذف خط زیر متن */
+    text-decoration: none;
     color: white;
-    padding: 10px;
+    padding: 10px 15px;
+    border-radius: 5px;
     transition: background-color 0.3s ease;
 }
 
 nav ul li a:hover {
-    background-color: #495057; /* تغییر رنگ هنگام هاور */
-    border-radius: 5px;
+    background-color: #0366d6; /* تغییر رنگ در هنگام هاور */
 }
 
 nav ul li ul {
+    display: none;
     position: absolute;
     top: 100%;
-    right: 0; /* راست‌چین کردن زیرمنو */
-    display: none;
-    background-color: #495057;
+    right: 0;
+    background-color: #333d47;
     padding: 10px;
     border-radius: 5px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+nav ul li:hover ul {
+    display: block;
 }
 
 nav ul li ul li {
@@ -55,64 +61,66 @@ nav ul li ul li {
 }
 
 nav ul li ul li a {
+    display: block;
     padding: 5px 10px;
-    display: block;
+    color: white;
+    border-radius: 3px;
 }
 
-nav ul li:hover ul {
-    display: block;
+nav ul li ul li a:hover {
+    background-color: #0366d6;
 }
 
-/* استایل هدر اصلی صفحه */
+/* تیتر صفحه */
 h1 {
-    color: #343a40;
-    font-size: 2em;
-    margin-top: 20px;
-    text-align: right; /* ترازبندی راست */
+    color: #24292e;
+    font-size: 2.5em;
+    margin: 20px 0;
 }
 
-/* استایل برای محتوای اصلی */
-main {
-    padding: 20px;
-}
-
-/* استایل برای دکمه‌ها */
+/* دکمه‌ها */
 button {
-    background-color: #007bff; /* رنگ آبی برای دکمه‌ها */
+    background-color: #28a745; /* رنگ سبز برای دکمه‌ها */
     color: white;
     border: none;
-    padding: 10px 15px;
+    padding: 10px 20px;
     border-radius: 5px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    font-size: 1em;
+    transition: background-color 0.3s ease, transform 0.2s ease;
 }
 
 button:hover {
-    background-color: #0056b3; /* تغییر رنگ هنگام هاور */
+    background-color: #218838;
+    transform: scale(1.05); /* افکت هاور */
 }
 
-/* استایل جداول */
+/* جداول */
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
-    text-align: right; /* ترازبندی راست */
+    background-color: white;
+    border-radius: 5px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 table th, table td {
-    padding: 10px;
+    padding: 15px;
+    text-align: right;
     border: 1px solid #ddd;
 }
 
 table th {
-    background-color: #343a40;
+    background-color: #0366d6;
     color: white;
 }
 
 table tr:nth-child(even) {
-    background-color: #f2f2f2;
+    background-color: #f4f4f9;
 }
 
 table tr:hover {
-    background-color: #e9ecef;
+    background-color: #e6f7ff;
 }
