@@ -50,26 +50,10 @@ def update_user(user_id: int, user: UserCreate, db: Session = Depends(get_db)):
         return db_user
     return {"message": "User not found"}
 
-# مسیر پیش‌فرض (ریشه)
-@app.get("/")
-def read_root():
-    return {
-        "message": "Welcome to KD VPN Backend"
-    }
-
-# مسیر نمایش صفحه تنظیمات (HTML)
-@app.get("/settings", response_class=HTMLResponse)
-async def settings_page(request: Request):
-    return templates.TemplateResponse("settings.html", {"request": request})
-
-# مسیر نمایش کاربران (HTML)
-@app.get("/users", response_class=HTMLResponse)
-async def users_page(request: Request):
-    users = [
-        {"name": "کاربر ۱", "uuid": "12345", "expiry": 30},
-        {"name": "کاربر ۲", "uuid": "67890", "expiry": 15},
-    ]
-    return templates.TemplateResponse("user.html", {"request": request, "users": users})
+# تغییر مسیر پیش‌فرض برای نمایش HTML
+@app.get("/", response_class=HTMLResponse)
+async def read_root(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
 # اضافه کردن روترهای تعریف‌شده
 app.include_router(router)
