@@ -7,23 +7,20 @@
     <link rel="stylesheet" href="/static/css/styles.css">
 </head>
 <body>
-    <div class="container">
-        <h1>تنظیمات پیشرفته</h1>
-        <form action="/save_settings" method="POST">
-            <label for="lang">زبان:</label>
-            <select name="lang" id="lang">
-                <option value="fa" {% if lang == "fa" %}selected{% endif %}>فارسی</option>
-                <option value="en" {% if lang == "en" %}selected{% endif %}>انگلیسی</option>
-            </select>
-            <br>
-            <label for="proxy">انتخاب پروکسی:</label>
-            <select name="proxy" id="proxy">
-                <option value="XRay" {% if proxy == "XRay" %}selected{% endif %}>XRay</option>
-                <option value="Sing-box" {% if proxy == "Sing-box" %}selected{% endif %}>Sing-box</option>
-            </select>
-            <br>
-            <button type="submit">ذخیره تنظیمات</button>
-        </form>
-    </div>
+    <nav>
+        <ul>
+            <li><a href="/">داشبورد</a></li>
+            <li>
+                <a href="#">مدیریت</a>
+                <ul>
+                    <li><a href="/users">مدیریت کاربران</a></li>
+                    <li><a href="/domains">مدیریت دامنه‌ها</a></li>
+                    <li><a href="/settings">تنظیمات</a></li>
+                </ul>
+            </li>
+        </ul>
+    </nav>
+    <h1>تنظیمات</h1>
+    <!-- محتوای اصلی تنظیمات -->
 </body>
 </html>
