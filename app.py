@@ -10,14 +10,34 @@ from backend.schemas import UserCreate
 # ایجاد شیء FastAPI
 app = FastAPI()
 
-# ایجاد روتر
-router = APIRouter()
-
 # تنظیم قالب‌ها (templates)
 templates = Jinja2Templates(directory="backend/templates")
 
 # اضافه کردن مسیر برای فایل‌های استاتیک
 app.mount("/static", StaticFiles(directory="backend/static"), name="static")
+
+# ایجاد روتر
+router = APIRouter()
+
+# مسیر پیش‌فرض: نمایش داشبورد
+@app.get("/", response_class=HTMLResponse)
+async def dashboard_page(request: Request):
+    return templates.TemplateResponse("dashboard.html", {"request": request})
+
+# مسیر کاربران: نمایش صفحه مدیریت کاربران
+@app.get("/users", response_class=HTMLResponse)
+async def users_page(request: Request):
+    return templates.TemplateResponse("user.html", {"request": request})
+
+# مسیر دامنه‌ها: نمایش صفحه مدیریت دامنه‌ها
+@app.get("/domains", response_class=HTMLResponse)
+async def domains_page(request: Request):
+    return templates.TemplateResponse("domains.html", {"request": request})
+
+# مسیر تنظیمات: نمایش صفحه تنظیمات
+@app.get("/settings", response_class=HTMLResponse)
+async def settings_page(request: Request):
+    return templates.TemplateResponse("settings.html", {"request": request})
 
 # اضافه کردن کاربر جدید
 @router.post("/users")
@@ -49,11 +69,6 @@ def update_user(user_id: int, user: UserCreate, db: Session = Depends(get_db)):
         db.refresh(db_user)
         return db_user
     return {"message": "User not found"}
-
-# تغییر مسیر پیش‌فرض برای نمایش HTML
-@app.get("/", response_class=HTMLResponse)
-async def read_root(request: Request):
-    return templates.TemplateResponse("index.html", {"request": request})
 
 # اضافه کردن روترهای تعریف‌شده
 app.include_router(router)
